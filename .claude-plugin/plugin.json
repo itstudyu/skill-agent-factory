@@ -1,0 +1,10 @@
+{
+  "name": "skill-agent-factory",
+  "description": "A centralized factory for Claude Code skills and agents, organized by category (backend, frontend, database, api-reference, devops). Claude automatically selects the right skill or agent based on your task.",
+  "version": "1.0.0",
+  "author": {
+    "name": "Peanut"
+  },
+  "repository": "https://github.com/ysjapan97/skill-agent-factory",
+  "license": "MIT"
+}
