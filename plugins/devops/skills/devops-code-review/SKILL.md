@@ -1,5 +1,6 @@
 ---
 name: devops-code-review
+version: v1.0
 description: Code quality and logic review. Run after code is written. Verifies AI-generated code has no bugs, logic errors, memory leaks, or performance issues. Checks that the implementation matches the original request.
 tags: [devops, review, code, quality, bugs, logic]
 allowed-tools: Read, Grep, Glob

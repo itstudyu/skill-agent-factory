@@ -1,5 +1,6 @@
 ---
 name: figma-design-token-extractor
+version: v1.0
 description: Extracts design tokens (colors, fonts, spacing, shadows, border-radius, etc.) from Figma files via Figma MCP and converts them into code-ready variable formats — CSS custom properties, SCSS variables, Tailwind config, and JSON tokens (W3C format). Synchronizes Figma design system with project code. Triggers on requests like "토큰 추출", "디자인 토큰", "extract tokens", "design tokens", "Figma styles".
 tags: [figma, design-token, colors, typography, css, extract]
 allowed-tools: Read, Write, Glob, mcp__figma__get_file, mcp__figma__get_styles

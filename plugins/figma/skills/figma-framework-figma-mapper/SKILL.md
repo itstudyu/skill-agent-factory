@@ -1,5 +1,6 @@
 ---
 name: figma-framework-figma-mapper
+version: v1.0
 description: Maps UI framework components to Figma design components. Supports PrimeFaces as a preset (with Figma UI Kit). Also supports custom frameworks via name + documentation URL. Uses Figma MCP to read design files and generates a component mapping table linking framework components to their Figma counterparts with confidence scores. Triggers on requests like "맵핑", "컴포넌트 맵핑", "map components", "framework mapping".
 tags: [figma, framework, component, mapping, ui-kit]
 requires: [figma-design-token-extractor]

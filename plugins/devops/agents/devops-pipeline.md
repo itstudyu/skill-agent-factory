@@ -3,6 +3,7 @@ name: devops-pipeline
 description: Development pipeline orchestrator. Called by skill-router for development tasks. Trigger directly only when the user explicitly names this pipeline (e.g., "run devops pipeline", "start the pipeline") — for all other requests, skill-router routes here automatically. Handles: implement, write code, fix bug, add feature, create API, build component.
 tools: Read, Write, Edit, Bash, Grep, Glob, Task
 model: sonnet
+version: v1.0
 ---
 
 # DevOps Pipeline Agent

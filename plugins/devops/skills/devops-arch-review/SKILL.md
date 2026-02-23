@@ -1,5 +1,6 @@
 ---
 name: devops-arch-review
+version: v1.0
 description: Architecture and coding standards review. Use when the user asks to check code structure, folder layout, naming conventions, error handling patterns, try/catch placement, log levels, or duplicate code. Triggers on "check architecture", "review structure", "코드 구조 확인", "アーキテクチャレビュー", "중복 코드", "에러 처리 패턴".
 tags: [devops, review, architecture, structure, standards]
 allowed-tools: Read, Grep, Glob

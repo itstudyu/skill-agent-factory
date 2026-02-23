@@ -1,5 +1,6 @@
 ---
 name: devops-safety-check
+version: v1.0
 description: Lightweight code security check. Run after code is written. Checks for secrets, vulnerable dependencies, SQL injection, XSS patterns. Keeps token usage minimal — scan and report only critical issues.
 tags: [devops, security, safety, secrets, vulnerability]
 allowed-tools: Grep, Read, Glob, Bash

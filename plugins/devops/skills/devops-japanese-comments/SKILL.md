@@ -1,5 +1,6 @@
 ---
 name: devops-japanese-comments
+version: v1.0
 description: Enforce Japanese language in code comments and log messages. Run after code review. Converts all English comments to Japanese. Adds missing comments to complex logic blocks.
 tags: [devops, japanese, comments, logs, localization]
 allowed-tools: Read, Edit, Grep, Glob

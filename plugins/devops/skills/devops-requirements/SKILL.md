@@ -1,5 +1,6 @@
 ---
 name: devops-requirements
+version: v1.0
 description: Development requirements gathering. Use at the START of every development request before writing any code. Triggers on requests like "implement X", "create feature", "build API", "add function", "develop", "make a component", "integrate with API", or any feature development task.
 tags: [devops, requirements, planning, spec, feature]
 allowed-tools: Read, Glob, Grep

@@ -3,6 +3,7 @@ name: figma-to-code
 description: Converts Figma designs into production-ready frontend code. Use proactively when the user wants to generate code from a Figma design, screenshot, or design file. Runs the Figma pre-flight pipeline (token-extract → mapper → analyzer), then generates framework-specific code (PrimeFaces, React, Vue, Angular, Next.js), validates responsive design across all breakpoints in a fix loop, and syncs with figma-code-sync. All code comments and commit messages are in Japanese.
 tools: Read, Write, Edit, Bash, Grep, Glob
 model: opus
+version: v1.0
 ---
 
 # figma-to-code Agent

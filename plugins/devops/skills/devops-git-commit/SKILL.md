@@ -1,5 +1,6 @@
 ---
 name: devops-git-commit
+version: v1.0
 description: Git commit with branch strategy. Run at the END of every development task. Creates a feature branch if needed, writes a concise Japanese commit message (1-4 lines), and never commits to master/main unless the user explicitly says so.
 tags: [devops, git, commit, branch, version-control]
 allowed-tools: Bash

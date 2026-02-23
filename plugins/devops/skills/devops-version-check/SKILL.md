@@ -1,5 +1,6 @@
 ---
 name: devops-version-check
+version: v1.0
 description: Language version and dependency safety check. Verifies code uses correct syntax for the project's language version, APIs are not deprecated, and dependencies are stable/secure versions.
 tags: [devops, version, dependency, package, compatibility]
 allowed-tools: Read, Glob, Bash, Grep

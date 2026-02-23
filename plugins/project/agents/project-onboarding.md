@@ -3,6 +3,7 @@ name: project-onboarding
 description: Project onboarding agent. Auto-detects existing vs new projects, analyzes code patterns, and generates project-context/ (structure.md + instruction.md). Run once per project before development begins. Triggers on "プロジェクト初期化", "project onboarding", "프로젝트 온보딩", "analyze project structure", "setup project context", "new project setup".
 tools: Read, Write, Edit, Bash, Grep, Glob
 model: sonnet
+version: v1.0
 ---
 
 # Project Onboarding Agent

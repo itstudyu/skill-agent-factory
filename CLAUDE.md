@@ -104,8 +104,9 @@ skill-agent-factory/
 │   │   ├── plugin.json
 │   │   ├── agents/devops-pipeline.md
 │   │   └── skills/{skill-name}/
-│   │       ├── metadata.md  ← lightweight routing (tags, use-when, model) — always loaded
-│   │       └── SKILL.md     ← full instructions — loaded only when selected
+│   │       ├── metadata.md    ← Tier 1: routing (tags, use-when, model) — always loaded
+│   │       ├── SKILL.md       ← Tier 2: full instructions — loaded only when selected
+│   │       └── resources/     ← Tier 3: checklists, templates — loaded on-demand
 │   ├── figma/             ← Figma plugin (5 skills + figma-to-code agent)
 │   │   ├── plugin.json
 │   │   ├── agents/figma-to-code.md
@@ -203,7 +204,27 @@ Always read the relevant doc in `_docs/` before writing:
 
 ### Step 4 — Create the Asset
 
-**Skills** require TWO files:
+**Skills** use a 3-tier file structure:
+
+```
+plugins/{plugin}/skills/{skill-name}/
+├── metadata.md     ← Tier 1: always loaded (routing, tags, model)
+├── SKILL.md        ← Tier 2: loaded when skill is selected
+└── resources/      ← Tier 3: loaded on-demand only (checklist, template, examples)
+    ├── checklist.md
+    └── template.md
+```
+
+**When to use `resources/`:**
+- Detailed checklists that would bloat `SKILL.md` (>50 lines)
+- Reusable templates the skill outputs (e.g., requirements template, blueprint)
+- Examples that help Claude understand edge cases
+- Reference tables (e.g., framework component mappings)
+
+**How to reference from `SKILL.md`:**
+```markdown
+Read: plugins/devops/skills/devops-code-review/resources/checklist.md
+```
 
 `plugins/{plugin}/skills/{category}-{skill-name}/metadata.md` — lightweight routing file (always loaded)
 ```yaml

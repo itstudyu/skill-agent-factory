@@ -1,5 +1,6 @@
 ---
 name: figma-design-analyzer
+version: v1.0
 description: Analyzes Figma designs to produce a frontend implementation blueprint before coding begins. Captures screenshots of each screen/section, breaks down the page structure, recommends specific framework components for each UI element, and generates a detailed implementation plan with build order. Bridges the gap between design and code. Triggers on requests like "디자인 분석", "구현 계획", "analyze design", "implementation plan", "어떻게 만들어?".
 tags: [figma, design, analyze, blueprint, frontend, planning]
 requires: [figma-design-token-extractor, figma-framework-figma-mapper]
