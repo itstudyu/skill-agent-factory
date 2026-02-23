@@ -37,19 +37,38 @@ If not specified, ask:
 
 ---
 
-## Phase 2 — Design Analysis
+## Phase 2 — Design Analysis (requires: 順序に従って実行)
 
-### 2.1: Run figma-design-token-extractor
+**実行前に各スキルの SKILL.md frontmatter の `requires:` フィールドを確認して実行順序を決定する。**
+
+```
+手順:
+1. 実行候補スキルのリストを作成
+2. 各スキルの SKILL.md を読み requires: フィールドを確認
+3. requires なし → 最初のグループ (並列実行可)
+4. requires あり → 依存スキル完了後に実行
+
+現在の依存グラフ (requires: フィールドから自動的に解決される):
+  figma-design-token-extractor  requires: なし        → 最初に実行
+  figma-framework-figma-mapper  requires: [figma-design-token-extractor] → 2番目
+  figma-design-analyzer         requires: [figma-design-token-extractor,
+                                           figma-framework-figma-mapper] → 最後
+```
+
+> スキルの requires: が変更された場合でも、このエージェントは再読み込みなしに正しい順序で実行できる。
+> ハードコードされた番号順に依存しないこと。
+
+### 2.1: figma-design-token-extractor (requires: なし → 最初)
 - Extract colors, typography, spacing, shadows from the Figma file
 - Generate `tokens.css`, `_tokens.scss`, `tailwind.tokens.js`, `tokens.json`
 - These tokens will be used in all generated code
 
-### 2.2: Run figma-framework-figma-mapper
+### 2.2: figma-framework-figma-mapper (requires: [figma-design-token-extractor] → 2.1完了後)
 - Map Figma components → framework components
 - Generate `figma-mapping.md` and `figma-mapping.json`
 - Use PrimeFaces preset if applicable, otherwise custom mapping
 
-### 2.3: Run figma-design-analyzer
+### 2.3: figma-design-analyzer (requires: [figma-design-token-extractor, figma-framework-figma-mapper] → 2.1・2.2完了後)
 - Capture full-page + section screenshots
 - Break down page structure with ASCII diagram
 - Build component hierarchy tree
@@ -139,13 +158,13 @@ export default DashboardPage
 
 After code generation and Figma validation:
 
-**Run devops-pipeline steps (skipping Step 1 & Step 5 — already done):**
-- Step 2: Safety Check (devops-safety-check)
-- Step 3: Code Quality Review (devops-code-review)
-- Step 4: Japanese Comments (devops-japanese-comments)
-- Step 6: Version Check (devops-version-check)
-- Step 7: Test Generation (devops-test-gen)
-- Step 8: Git Commit with user confirmation (devops-git-commit)
+**Run devops-pipeline steps (STEP_REQUIREMENTS・FIGMA_PREFLIGHT・Development はスキップ — figma-to-code が完了済み):**
+- STEP_SAFETY   : devops-safety-check
+- STEP_CODE_REVIEW : devops-code-review
+- STEP_JAPANESE : devops-japanese-comments
+- STEP_VERSION  : devops-version-check
+- STEP_TESTS    : devops-test-gen
+- STEP_COMMIT   : devops-git-commit (ユーザー確認必須)
 
 ---
 

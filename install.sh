@@ -136,6 +136,29 @@ skill_count=0
 agent_count=0
 skip_count=0
 
+# ── Cleanup orphaned skill symlinks ──────────
+echo -e "${BLUE}Cleaning up orphaned skill symlinks...${NC}"
+
+removed_orphans=0
+if [ -d "$CLAUDE_SKILLS_DIR" ]; then
+  for link in "$CLAUDE_SKILLS_DIR"/*/; do
+    link="${link%/}"
+    [ -L "$link" ] || continue
+    target_path="$(readlink "$link")"
+    # Only touch symlinks that point INTO this factory's skills/ dir
+    if [[ "$target_path" == "$FACTORY_DIR/skills/"* ]] && [ ! -e "$link" ]; then
+      rm "$link"
+      echo -e "  ${RED}✗${NC}  Removed orphaned symlink: $(basename "$link")"
+      ((removed_orphans++)) || true
+    fi
+  done
+fi
+if [ "$removed_orphans" -eq 0 ]; then
+  echo "  (No orphaned symlinks found)"
+fi
+
+echo ""
+
 # ── Link Skills ──────────────────────────────
 echo -e "${BLUE}Linking skills...${NC}"
 
@@ -264,6 +287,9 @@ echo -e "${GREEN}═════════════════════
 echo -e "${GREEN}  Install complete!${NC}"
 echo -e "${GREEN}  Skills linked  : $skill_count${NC}"
 echo -e "${GREEN}  Agents linked  : $agent_count${NC}"
+if [ "$removed_orphans" -gt 0 ]; then
+echo -e "${RED}  Orphans removed: $removed_orphans (deleted skill symlinks cleaned up)${NC}"
+fi
 if [ "$skip_count" -gt 0 ]; then
 echo -e "${YELLOW}  Skipped        : $skip_count (conflict with existing files)${NC}"
 fi
@@ -282,5 +308,19 @@ if command -v python3 &>/dev/null && [ -f "$FACTORY_DIR/scripts/sync-registry.py
   python3 "$FACTORY_DIR/scripts/sync-registry.py"
 else
   echo -e "  ${YELLOW}⚠${NC}  python3 not found — skipping auto-sync (run manually: python3 scripts/sync-registry.py)"
+fi
+echo ""
+
+# ── Lint skills & agents ───────────────────────
+echo -e "${BLUE}Running lint checks...${NC}"
+if command -v python3 &>/dev/null && [ -f "$FACTORY_DIR/scripts/lint-skills.py" ]; then
+  python3 "$FACTORY_DIR/scripts/lint-skills.py"
+  lint_exit=$?
+  if [ "$lint_exit" -ne 0 ]; then
+    echo -e "${YELLOW}  ⚠  lint でエラーが検出されました。上記の内容を確認してください。${NC}"
+    echo -e "${YELLOW}  手動実行: python3 scripts/lint-skills.py${NC}"
+  fi
+else
+  echo -e "  ${YELLOW}⚠${NC}  python3 not found — skipping lint (run manually: python3 scripts/lint-skills.py)"
 fi
 echo ""

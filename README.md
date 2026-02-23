@@ -11,15 +11,20 @@ When you give Claude Code a task, it automatically selects the right skill or ag
 ```
 skill-agent-factory/
 ├── CLAUDE.md            ← Master instructions (auto-read by Claude Code)
-├── registry.md          ← Master list of all skills and agents
-├── install.sh           ← Global installer (symlinks + hooks)
-├── skills/              ← Claude Code skills (auto-selected by Claude)
+├── README.md            ← This file
+├── registry.md          ← Master registry of ALL assets (auto-updated by scripts)
+├── install.sh           ← Global installer: symlinks + orphan cleanup + lint + hooks
+├── skills/              ← ALL skills (flat, category-prefixed names)
 │   └── {category}-{name}/SKILL.md
-├── agents/              ← Claude Code agents
+├── agents/              ← ALL agents
 │   └── {agent-name}.md
+├── scripts/             ← Automation utilities (run via install.sh or manually)
+│   ├── sync-registry.py ← Auto-syncs registry.md + README.md from SKILL.md files
+│   ├── lint-skills.py   ← Quality checker: frontmatter, requires refs, dep chains
+│   └── dep-graph.py     ← Dependency tree visualizer + reverse lookup
 ├── standards/           ← Global coding rules (detailed examples)
 │   └── CODING-STANDARDS.md
-├── categories/          ← Domain-specific context files
+├── categories/          ← Category context docs (reference only — skills live in skills/)
 │   ├── backend/CLAUDE.md
 │   ├── frontend/CLAUDE.md
 │   ├── database/CLAUDE.md
@@ -40,10 +45,8 @@ skill-agent-factory/
 Every development request automatically runs through this pipeline:
 
 ```
-[1] Requirements Gathering   ← Hard gate — asks user if anything is unclear
-         ↓  (Figma URL provided? → Figma Pre-flight before coding)
-         ↓  [figma-project-context → figma-design-token-extractor
-             → figma-framework-figma-mapper → figma-design-analyzer]
+[1] Requirements Gathering   ← Hard gate — reads project-context/, asks if unclear
+         ↓  (Figma URL provided? → figma-to-code agent handles full Figma workflow)
          ↓  (write code)
 [2] Security Scan            ← Secrets, injection patterns (lightweight)
 [3] Code Quality Review      ← Logic, memory, N+1 queries, coding standards
@@ -208,11 +211,25 @@ alias claude='claude --plugin-dir ~/skill-agent-factory'
 
 | Agent | Model | Purpose |
 |-------|-------|---------|
-| `devops-pipeline` | sonnet | Full development pipeline orchestrator. Use proactively for ALL development requ |
+| `devops-pipeline` | sonnet | Development pipeline orchestrator. Called by skill-router for development tasks. |
 | `figma-to-code` | opus | Converts Figma designs into production-ready frontend code. Use proactively when |
 | `project-onboarding` | sonnet | Project onboarding agent. Auto-detects existing vs new projects, analyzes code p |
-| `skill-router` | sonnet | Central skill router for all user requests. Uses 2-phase matching — registry.md  |
+| `skill-router` | sonnet | PRIMARY ENTRY POINT for ALL user requests. Always invoke skill-router first — it |
 
+---
+
+## Automation Scripts
+
+| Script | When to Run | What It Does |
+|--------|------------|--------------|
+| `python3 scripts/sync-registry.py` | Auto (via install.sh) | Scans all SKILL.md + agents/*.md and updates registry.md + README.md |
+| `python3 scripts/lint-skills.py` | Auto (via install.sh) | Checks frontmatter, requires refs, step structure, dep chain depth |
+| `python3 scripts/lint-skills.py --strict` | CI / pre-merge | Same as above but warnings also count as errors |
+| `python3 scripts/dep-graph.py` | On demand | Prints full dependency tree for all skills |
+| `python3 scripts/dep-graph.py --reverse <skill>` | Before deleting a skill | Shows which skills depend on the target skill |
+| `python3 scripts/dep-graph.py --check` | On demand | Prints only dependency issues (missing refs, deep chains) |
+
+---
 
 ## Adding New Skills
 
@@ -227,6 +244,7 @@ mkdir -p skills/backend-my-skill
 ---
 name: backend-my-skill
 description: What this skill does. Use when the user asks to... [clear trigger keywords]
+tags: [backend, generate, code, api]
 ---
 
 # Backend My Skill
@@ -234,14 +252,15 @@ description: What this skill does. Use when the user asks to... [clear trigger k
 Step-by-step instructions for Claude to follow...
 ```
 
-### 3. Re-run installer (if using Method 1)
+`tags:` 는 skill-router의 Phase 1 필터링에 사용됩니다. 스킬의 도메인(devops, figma 등)과 액션(review, generate, validate 등)을 포함하세요.
+
+### 3. Re-run installer
 ```bash
 ./install.sh
+# 심링크 생성 + registry.md / README.md 자동 갱신 + lint 체크
 ```
 
-### 4. Update registry.md and README.md
-- Add an entry to `registry.md`
-- Update the **Current Skills & Agents** table in this README
+registry.md와 README.md는 `sync-registry.py`가 자동으로 업데이트합니다. 수동 편집 불필요.
 
 ---
 
@@ -259,7 +278,7 @@ model: sonnet
 You are a specialized agent for...
 ```
 
-Then re-run `./install.sh` and update `registry.md` + README.
+Then re-run `./install.sh` — registry.md and README are updated automatically.
 
 ---
 

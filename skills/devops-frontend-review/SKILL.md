@@ -1,6 +1,7 @@
 ---
 name: devops-frontend-review
 description: Frontend pixel-perfect review. Run after frontend code is written. Compares implementation against provided screenshots or Figma designs. Use when user provides a screenshot, image, or Figma link for UI implementation.
+tags: [devops, review, frontend, ui, pixel-perfect, screenshot]
 allowed-tools: Read, Glob, Bash
 ---
 

@@ -1,6 +1,6 @@
 ---
 name: devops-pipeline
-description: Full development pipeline orchestrator. Use proactively for ALL development requests — any time the user asks to implement a feature, write code, fix a bug, create an API, build a component, or make any code change. Automatically selects the appropriate pipeline MODE based on the type of work.
+description: Development pipeline orchestrator. Called by skill-router for development tasks. Trigger directly only when the user explicitly names this pipeline (e.g., "run devops pipeline", "start the pipeline") — for all other requests, skill-router routes here automatically. Handles: implement, write code, fix bug, add feature, create API, build component.
 tools: Read, Write, Edit, Bash, Grep, Glob, Task
 model: sonnet
 ---
@@ -25,7 +25,27 @@ model: sonnet
 
 ## STEP_MODE — モード検出 (必ず最初に実行)
 
-ユーザーのリクエストから作業種別を判定する。
+### 優先順位: 引き継ぎ情報 → ユーザー指定 → 自動検出
+
+**① skill-router からの引き継ぎ情報がある場合 → 再分析しない**
+
+```
+"📦 skill-router → devops-pipeline 引き継ぎ情報" ブロックが存在する場合:
+  → 「推定 MODE」をそのまま採用
+  → STEP_PLAN へ直接進む (検出ルール実行不要)
+
+✅ skill-router 引き継ぎ: MODE = {NEW/FEATURE/BUGFIX/PATCH} — 再分析スキップ
+```
+
+**② ユーザーが明示的に指定している場合 → そのまま採用**
+
+```
+"mode: new/feature/bugfix/patch" の指定がある場合:
+  → 指定 MODE を採用
+  → STEP_PLAN へ直接進む
+```
+
+**③ どちらもない場合 (直接呼び出し) → 以下のルールで自動検出**
 
 ### 検出ルール
 
@@ -118,8 +138,19 @@ Figma: {✅ / ❌}  Screenshot: {✅ / ❌}  Frontend: {✅ / ❌}
 
 **実行: NEW / FEATURE**
 
-- 既存コードパターンを先に読む (Glob, Read)
-- 不明点があれば必ずユーザーに確認する
+**① project-context を最初に読む (必須)**
+
+```
+Glob: project-context/structure.md   → 言語/フレームワーク/既存ファイルスコープ
+Glob: project-context/instruction.md → 命名規則/インポートスタイル/エラーハンドリングパターン
+```
+
+- `structure.md` の「既存ファイルスコープ」に含まれるファイルは変更しない
+- `instruction.md` のパターンを開発の前提とする（既存コードとの一貫性）
+- どちらも存在しない場合は project-onboarding 実行を推奨してから続行
+
+**② 要件の確認**
+- 既存コードパターン (instruction.md) を踏まえた上で不明点をユーザーに確認
 - Figma URL が含まれていれば FIGMA_PREFLIGHT へ
 
 **Gate:** 要件が明確になるまで開発を開始しない。
@@ -130,13 +161,29 @@ Figma: {✅ / ❌}  Screenshot: {✅ / ❌}  Frontend: {✅ / ❌}
 
 **実行: NEW / FEATURE かつ A_FIGMA=true**
 
-依存関係を守って順番に実行:
+**figma-to-code エージェントに委任する。直接 Figma スキルを実行しない。**
 
-1. `figma-design-token-extractor` — tokens.ts / tailwind.config 生成
-2. `figma-framework-figma-mapper` — requires: [figma-design-token-extractor]
-3. `figma-design-analyzer` — requires: [figma-design-token-extractor, figma-framework-figma-mapper]
+```
+→ figma-to-code エージェントを呼び出す
+   渡す情報: Figma URL + フレームワーク情報 + 要件
 
-全3スキル完了後 → Development へ。
+   figma-to-code が担当する処理 (Phase 1〜4):
+   - figma-design-token-extractor → tokens.css 生成
+   - figma-framework-figma-mapper → mapping.md 生成
+   - figma-design-analyzer        → blueprint.md 生成
+   - コード生成 → figma-code-sync → figma-responsive-validator
+
+   figma-to-code 完了後、以下の成果物を受け取る:
+   - implementation-blueprint.md
+   - tokens.css / tailwind.config
+   - 生成済みコンポーネントファイル
+
+→ Development フェーズはスキップ (figma-to-code が実装まで完了している)
+→ STEP_SAFETY から再開する
+```
+
+> 重複実行防止: devops-pipeline は Figma 解析スキルを直接呼び出さない。
+> figma-to-code の Phase 5 (DevOps Pipeline 連携) と重複するため。
 
 ---
 
@@ -179,7 +226,7 @@ HIGH / MED の問題をすべて修正する。
 
 新規開発時にアーキテクチャのベースラインを確立する。
 
-- `.skill-factory-context.json` キャッシュを確認（初回のみユーザーに Main 定義を確認）
+- `project-context/structure.md` の `## Main Module` セクションを確認（初回のみユーザーに確認 → structure.md に追記）
 - フォルダ構造・ファイル責務・Main ロール・命名・重複コード・try/catch・ログレベルを検査
 
 ---

@@ -1,6 +1,7 @@
 ---
 name: devops-requirements
 description: Development requirements gathering. Use at the START of every development request before writing any code. Triggers on requests like "implement X", "create feature", "build API", "add function", "develop", "make a component", "integrate with API", or any feature development task.
+tags: [devops, requirements, planning, spec, feature]
 allowed-tools: Read, Glob, Grep
 ---
 
@@ -10,6 +11,36 @@ allowed-tools: Read, Glob, Grep
 
 ## Purpose
 Ensure Claude fully understands the requirements before writing a single line of code. If anything is unclear, **STOP and ask the user**. Never assume.
+
+---
+
+## Step 0 — project-context を先に読む (最優先)
+
+**コードを書く前に必ず `project-context/` を確認すること。**
+
+```
+Glob: project-context/structure.md
+Glob: project-context/instruction.md
+```
+
+**structure.md が存在する場合 → 以下を確認して前提とする:**
+- 言語・フレームワーク → 重複確認しない
+- 既存ファイルスコープ → このリストのファイルは変更しない
+- フォルダ構造 → 新規ファイルの配置先を決める
+
+**instruction.md が存在する場合 → 以下を開発の前提とする:**
+- 命名規則 (camelCase? snake_case? ファイル名の形式?)
+- インポートスタイル (path alias? barrel export?)
+- エラーハンドリングパターン (既存コードと統一させる)
+- テストファイルの配置ルール
+
+**どちらも存在しない場合:**
+```
+⚠️ project-context/ が見つかりません。
+   project-onboarding を先に実行すると、プロジェクト構造とパターンが
+   自動検出・キャッシュされ、以降の開発が一貫性を保てます。
+   （スキップして続行することも可能です）
+```
 
 ---
 

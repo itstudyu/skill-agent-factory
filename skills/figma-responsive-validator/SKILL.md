@@ -1,6 +1,7 @@
 ---
 name: figma-responsive-validator
 description: Validates responsive design compliance of frontend code across Mobile, Tablet, and Desktop breakpoints. Performs static code analysis to detect layout issues, overflow risks, typography problems, and navigation gaps. Generates detailed reports with auto-fix code suggestions. Used by figma-to-code agent in a validate-fix loop until all breakpoints pass. Triggers on requests like "반응형 검증", "check responsive", "breakpoint validation", "모바일 확인".
+tags: [figma, responsive, validate, mobile, layout, breakpoint]
 allowed-tools: Read, Grep, Glob
 ---
 

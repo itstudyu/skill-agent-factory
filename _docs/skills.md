@@ -68,6 +68,9 @@ Step-by-step instructions Claude will follow when this skill is invoked.
 |-------|----------|-------------|
 | `name` | No | Display name (uses directory name if omitted). Lowercase, numbers, hyphens, max 64 chars |
 | `description` | Recommended | What it does + when to use. Claude decides when to apply |
+| `tags` | Recommended | Explicit intent tags for skill-router Phase 1 filtering. Example: `[devops, review, code, quality]`. Include domain (devops, figma, backend…) + action (review, generate, validate…) |
+| `requires` | No | Skills that must run before this one. Example: `[figma-design-token-extractor]`. Used by skill-router Phase 3 for dependency resolution |
+| `status` | No | `deprecated` = skill will be removed. Skips further lint checks |
 | `argument-hint` | No | Autocomplete hint. Example: `[issue-number]` |
 | `disable-model-invocation` | No | `true` = prevent Claude from auto-loading. Default: `false` |
 | `user-invocable` | No | `false` = hide from `/` menu. Default: `true` |

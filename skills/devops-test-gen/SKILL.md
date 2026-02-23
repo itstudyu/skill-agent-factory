@@ -1,6 +1,7 @@
 ---
 name: devops-test-gen
 description: Automatically generate unit tests for newly written code. Run after code review is clean. Generates tests appropriate for the detected framework (Jest, Pytest, Go test, etc.).
+tags: [devops, test, generate, unit-test, coverage]
 allowed-tools: Read, Write, Glob, Bash
 ---
 

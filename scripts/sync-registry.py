@@ -96,6 +96,11 @@ def scan_skills() -> list[dict]:
         category = name.split("-")[0] if "-" in name else "general"
         requires = fm.get("requires", "")
 
+        # tags: [a, b, c] → "a, b, c"
+        raw_tags = fm.get("tags", "")
+        tags_str = raw_tags.strip("[]").replace(", ", ",")
+        tags_list = [t.strip() for t in tags_str.split(",") if t.strip()]
+
         assets.append({
             "name":        name,
             "type":        "skill",
@@ -105,6 +110,7 @@ def scan_skills() -> list[dict]:
             "file_path":   f"skills/{skill_dir.name}/SKILL.md",
             "modified":    TODAY,
             "requires":    requires,
+            "tags":        tags_list,
         })
     return assets
 
@@ -132,6 +138,7 @@ def scan_agents() -> list[dict]:
             "modified":    TODAY,
             "model":       fm.get("model", "sonnet"),
             "requires":    fm.get("requires", ""),
+            "tags":        [],
         })
     return assets
 
@@ -141,16 +148,17 @@ def scan_agents() -> list[dict]:
 # ============================================================
 def build_registry_table(assets: list[dict]) -> str:
     header = (
-        "| Name | Type | Category | Version | Description | File Path | Last Modified |\n"
-        "|------|------|----------|---------|-------------|-----------|---------------|\n"
+        "| Name | Type | Category | Tags | Version | Description | File Path | Last Modified |\n"
+        "|------|------|----------|------|---------|-------------|-----------|---------------|\n"
     )
     rows = []
     for a in assets:
         desc = a["description"].replace("|", "\\|")
-        if len(desc) > 120:
-            desc = desc[:117] + "..."
+        if len(desc) > 100:
+            desc = desc[:97] + "..."
+        tags_cell = ", ".join(f"`{t}`" for t in a.get("tags", [])) or "—"
         rows.append(
-            f"| {a['name']} | {a['type']} | {a['category']} | {a['version']} "
+            f"| {a['name']} | {a['type']} | {a['category']} | {tags_cell} | {a['version']} "
             f"| {desc} | {a['file_path']} | {a['modified']} |"
         )
     return header + "\n".join(rows)

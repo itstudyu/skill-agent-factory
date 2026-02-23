@@ -1,6 +1,7 @@
 ---
 name: devops-arch-review
 description: Architecture and coding standards review. Use when the user asks to check code structure, folder layout, naming conventions, error handling patterns, try/catch placement, log levels, or duplicate code. Triggers on "check architecture", "review structure", "코드 구조 확인", "アーキテクチャレビュー", "중복 코드", "에러 처리 패턴".
+tags: [devops, review, architecture, structure, standards]
 ---
 
 # Architecture Review Skill
@@ -10,26 +11,50 @@ description: Architecture and coding standards review. Use when the user asks to
 
 ---
 
-## STEP 0 — Main 定義の確認 (コンテキストキャッシュ付き)
+## STEP 0 — Main 定義の確認 (project-context キャッシュ付き)
 
-**プロジェクトルートの `.skill-factory-context.json` を先に確認すること。**
+**`project-context/structure.md` を最優先で確認すること。**
+`.skill-factory-context.json` は旧形式のフォールバック。
 
-### 0-1: キャッシュ確認
+### 0-1: キャッシュ確認 (優先順位順)
 
-```bash
-# プロジェクトルートを検索
-Glob: .skill-factory-context.json
+**① project-context/structure.md を確認 (最優先)**
+
+```
+Glob: project-context/structure.md
 ```
 
-**キャッシュが存在する場合 → そのまま使用:**
+→ **存在し、`## Main Module` セクションがある場合:**
 ```
-✅ コンテキストキャッシュ読み込み済み
-   Mainモジュール: {mainModule.description}
-   対象ファイル: {mainModule.files}
+✅ project-context/structure.md からキャッシュ読み込み済み
+   Mainモジュール: {Main Module セクションの内容}
    → 確認不要。チェック開始します。
 ```
 
-**キャッシュが存在しない場合 → ユーザーに質問:**
+→ **存在するが `## Main Module` セクションがない場合:**
+ユーザーに質問 → 回答を structure.md に追記（STEP 0-3 参照）
+
+→ **存在しない場合 → ② へ**
+
+**② フォールバック: .skill-factory-context.json を確認**
+
+```
+Glob: .skill-factory-context.json
+```
+
+→ **存在する場合:**
+```
+✅ .skill-factory-context.json からキャッシュ読み込み済み (旧形式)
+   Mainモジュール: {mainModule.description}
+   → 確認不要。チェック開始します。
+   ※ project-onboarding を実行すると project-context/ に統合されます。
+```
+
+→ **どちらも存在しない場合 → ユーザーに質問 (STEP 0-2)**
+
+---
+
+### 0-2: ユーザーへの確認 (キャッシュがない場合のみ)
 
 ```
 ## 📋 アーキテクチャレビュー開始前の確認 (初回のみ)
@@ -45,28 +70,30 @@ Glob: .skill-factory-context.json
 5. Main.java / Application.java（Java）
 6. その他（自由に教えてください）
 
-→ 次回から自動的に記憶されます。
+→ 次回から自動的に記憶されます（project-context/structure.md に保存）。
 ```
 
-### 0-2: キャッシュ保存
+### 0-3: 回答の保存
 
-ユーザーの回答を受け取ったら `.skill-factory-context.json` を作成/更新する:
+ユーザーの回答を受け取ったら `project-context/structure.md` の末尾に追記する:
 
-```json
-{
-  "mainModule": {
-    "description": "{ユーザーの回答}",
-    "files": ["{検出されたファイルパターン}"]
-  },
-  "language": "{検出された言語}",
-  "framework": "{検出されたフレームワーク}",
-  "testFramework": "{検出されたテストフレームワーク}",
-  "lastUpdated": "{今日の日付}"
-}
+```bash
+mkdir -p project-context
 ```
 
-> このファイルは `.gitignore` に追加を推奨（プロジェクトごとに異なるため）。
-> ただしチームで共有したい場合はコミットしてもよい。
+追記する内容:
+```markdown
+## Main Module
+
+- **説明:** {ユーザーの回答}
+- **対象ファイル:** {検出されたファイルパターン (例: src/controllers/*.ts)}
+- **言語:** {検出された言語}
+- **フレームワーク:** {検出されたフレームワーク}
+- **最終更新:** {今日の日付}
+```
+
+> `project-context/structure.md` が存在しない場合は新規作成してから追記する。
+> `.skill-factory-context.json` は新規作成しない（旧形式のため非推奨）。
 
 ユーザーの回答 or キャッシュ確認完了後 → 以下のチェックリストを実行する。
 
