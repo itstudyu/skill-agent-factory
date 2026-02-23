@@ -140,17 +140,40 @@ skip_count=0
 echo -e "${BLUE}Cleaning up orphaned symlinks...${NC}"
 
 removed_orphans=0
-for link in "$CLAUDE_SKILLS_DIR"/*/ "$CLAUDE_AGENTS_DIR"/*.md; do
-  link="${link%/}"
-  [ -L "$link" ] || continue
-  target_path="$(readlink "$link")"
-  # Remove dangling symlinks that point into this factory's plugins/
-  if [[ "$target_path" == "$FACTORY_DIR/plugins/"* ]] && [ ! -e "$link" ]; then
-    rm "$link"
-    echo -e "  ${RED}✗${NC}  Removed orphaned symlink: $(basename "$link")"
-    ((removed_orphans++)) || true
-  fi
-done
+
+# skills: dangling symlinks from this factory (plugins/ OR legacy skills/)
+if [ -d "$CLAUDE_SKILLS_DIR" ]; then
+  for link in "$CLAUDE_SKILLS_DIR"/*/; do
+    link="${link%/}"
+    [ -L "$link" ] || continue
+    target_path="$(readlink "$link")"
+    is_factory_link=false
+    [[ "$target_path" == "$FACTORY_DIR/plugins/"* ]] && is_factory_link=true
+    [[ "$target_path" == "$FACTORY_DIR/skills/"*  ]] && is_factory_link=true
+    if $is_factory_link && [ ! -e "$link" ]; then
+      rm "$link"
+      echo -e "  ${RED}✗${NC}  Removed orphaned skill symlink: $(basename "$link")"
+      ((removed_orphans++)) || true
+    fi
+  done
+fi
+
+# agents: dangling symlinks from this factory
+if [ -d "$CLAUDE_AGENTS_DIR" ]; then
+  for link in "$CLAUDE_AGENTS_DIR"/*.md; do
+    [ -L "$link" ] || continue
+    target_path="$(readlink "$link")"
+    is_factory_link=false
+    [[ "$target_path" == "$FACTORY_DIR/plugins/"* ]] && is_factory_link=true
+    [[ "$target_path" == "$FACTORY_DIR/agents/"*  ]] && is_factory_link=true
+    if $is_factory_link && [ ! -e "$link" ]; then
+      rm "$link"
+      echo -e "  ${RED}✗${NC}  Removed orphaned agent symlink: $(basename "$link")"
+      ((removed_orphans++)) || true
+    fi
+  done
+fi
+
 if [ "$removed_orphans" -eq 0 ]; then
   echo "  (No orphaned symlinks found)"
 fi

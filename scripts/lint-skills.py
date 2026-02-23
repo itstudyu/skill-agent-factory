@@ -19,8 +19,7 @@ from pathlib import Path
 # 設定
 # ============================================================
 FACTORY_ROOT = Path(__file__).parent.parent
-SKILLS_DIR   = FACTORY_ROOT / "skills"
-AGENTS_DIR   = FACTORY_ROOT / "agents"
+PLUGINS_DIR  = FACTORY_ROOT / "plugins"
 STRICT_MODE  = "--strict" in sys.argv
 
 # 実行時に生成されるパスは存在チェックから除外
@@ -70,6 +69,28 @@ def parse_frontmatter(filepath: Path) -> dict:
         if key and val:
             result[key] = val
 
+    # マルチライン YAML ブロックスカラー (use-when: > など) の収集
+    def collect_multiline(field_name: str) -> str | None:
+        lines_out = []
+        in_field = False
+        for line in fm_block.splitlines():
+            if line.startswith(f"{field_name}:"):
+                in_field = True
+                val = line.partition(":")[2].strip().strip('"').strip("'").lstrip(">").strip()
+                if val:
+                    lines_out.append(val)
+            elif in_field and (line.startswith("  ") or line.startswith("\t")):
+                lines_out.append(line.strip())
+            else:
+                if in_field:
+                    in_field = False
+        return " ".join(lines_out) if lines_out else None
+
+    for field in ("description", "use-when"):
+        val = collect_multiline(field)
+        if val:
+            result[field] = val
+
     return result
 
 
@@ -97,15 +118,18 @@ def check_skill(skill_dir: Path, all_skill_names: set) -> tuple[int, int]:
     """単一スキルをチェック。(errors, warnings) を返す"""
     errors = 0
     warnings = 0
-    skill_md = skill_dir / "SKILL.md"
-    dir_name = skill_dir.name
+    skill_md  = skill_dir / "SKILL.md"
+    meta_md   = skill_dir / "metadata.md"
+    dir_name  = skill_dir.name
 
     # ── SKILL.md 存在チェック ──────────────────────────
     if not skill_md.exists():
         err(f"[{dir_name}] SKILL.md が存在しない")
         return 1, 0
 
-    fm = parse_frontmatter(skill_md)
+    # metadata.md がある場合はそちらから frontmatter を読む
+    fm_source = meta_md if meta_md.exists() else skill_md
+    fm   = parse_frontmatter(fm_source)
     body = read_body(skill_md)
 
     # ── フロントマター: name ────────────────────────────
@@ -116,12 +140,14 @@ def check_skill(skill_dir: Path, all_skill_names: set) -> tuple[int, int]:
         warn(f"[{dir_name}] name: '{fm['name']}' がディレクトリ名と不一致")
         warnings += 1
 
-    # ── フロントマター: description ─────────────────────
-    if "description" not in fm:
-        err(f"[{dir_name}] frontmatter に description: がない")
+    # ── フロントマター: description または use-when ──────
+    # metadata.md は use-when: を使用、SKILL.md は description: を使用
+    desc_val = fm.get("description") or fm.get("use-when", "")
+    if not desc_val:
+        err(f"[{dir_name}] frontmatter に description: / use-when: がない")
         errors += 1
-    elif len(fm["description"]) < 20:
-        warn(f"[{dir_name}] description が短すぎる ({len(fm['description'])} 文字) — トリガー精度が下がる可能性")
+    elif len(desc_val) < 20:
+        warn(f"[{dir_name}] description/use-when が短すぎる ({len(desc_val)} 文字) — トリガー精度が下がる可能性")
         warnings += 1
 
     # ── フロントマター: status=deprecated チェック ───────
@@ -205,9 +231,9 @@ def check_agent(agent_file: Path, all_skill_names: set) -> tuple[int, int]:
 
     # ── 本文: 存在スキル参照チェック ─────────────────────
     # バッククォートやコードブロック内のスキル名のみチェック (説明文の誤検知を防ぐ)
-    # 例: `devops-git-commit` や devops-git-commit agent のみ対象
+    all_agent_names = {f.stem for f in collect_all_agent_files()}
     skill_calls = re.findall(
-        r"`((?:devops|figma)-[a-z\-]+)`",
+        r"`((?:devops|figma|project)-[a-z\-]+)`",
         body
     )
     for skill_ref in set(skill_calls):
@@ -215,10 +241,10 @@ def check_agent(agent_file: Path, all_skill_names: set) -> tuple[int, int]:
         if skill_ref == file_name:
             continue
         # エージェント名リストにあるなら除外
-        if (AGENTS_DIR / f"{skill_ref}.md").exists():
+        if skill_ref in all_agent_names:
             continue
         if skill_ref not in all_skill_names:
-            warn(f"[agent:{file_name}] `{skill_ref}` を参照しているが skills/ にも agents/ にも存在しない")
+            warn(f"[agent:{file_name}] `{skill_ref}` を参照しているが plugins/ にも agents/ にも存在しない")
             warnings += 1
 
     return errors, warnings
@@ -228,22 +254,21 @@ MAX_DEP_DEPTH = 3  # これ以上深い依存チェーンは警告
 
 
 def _build_deps() -> dict[str, list[str]]:
-    """requires: フィールドから依存グラフを構築"""
+    """requires: フィールドから依存グラフを構築 (plugins/ ベース)"""
     deps: dict[str, list[str]] = {}
-    if not SKILLS_DIR.exists():
-        return deps
-    for skill_dir in SKILLS_DIR.iterdir():
-        if not skill_dir.is_dir():
-            continue
+    for skill_dir in collect_all_skill_dirs():
+        meta_md  = skill_dir / "metadata.md"
         skill_md = skill_dir / "SKILL.md"
-        if not skill_md.exists():
+        source = meta_md if meta_md.exists() else (skill_md if skill_md.exists() else None)
+        if source is None:
             continue
-        fm = parse_frontmatter(skill_md)
+        fm = parse_frontmatter(source)
+        name = fm.get("name", skill_dir.name)
         if "requires" in fm:
             raw = fm["requires"].strip("[]")
-            deps[skill_dir.name] = [r.strip() for r in raw.split(",") if r.strip()]
+            deps[name] = [r.strip() for r in raw.split(",") if r.strip()]
         else:
-            deps[skill_dir.name] = []
+            deps[name] = []
     return deps
 
 
@@ -303,6 +328,39 @@ def check_dep_depth(all_skill_names: set) -> int:
 # ============================================================
 # メイン
 # ============================================================
+def collect_all_skill_dirs() -> list[Path]:
+    """plugins/*/skills/* のスキルディレクトリ一覧を返す"""
+    skill_dirs: list[Path] = []
+    if not PLUGINS_DIR.exists():
+        return skill_dirs
+    for plugin_dir in sorted(PLUGINS_DIR.iterdir()):
+        if not plugin_dir.is_dir():
+            continue
+        skills_dir = plugin_dir / "skills"
+        if not skills_dir.exists():
+            continue
+        for skill_dir in sorted(skills_dir.iterdir()):
+            if skill_dir.is_dir():
+                skill_dirs.append(skill_dir)
+    return skill_dirs
+
+
+def collect_all_agent_files() -> list[Path]:
+    """plugins/*/agents/*.md のエージェントファイル一覧を返す"""
+    agent_files: list[Path] = []
+    if not PLUGINS_DIR.exists():
+        return agent_files
+    for plugin_dir in sorted(PLUGINS_DIR.iterdir()):
+        if not plugin_dir.is_dir():
+            continue
+        agents_dir = plugin_dir / "agents"
+        if not agents_dir.exists():
+            continue
+        for agent_file in sorted(agents_dir.glob("*.md")):
+            agent_files.append(agent_file)
+    return agent_files
+
+
 def main() -> int:
     total_errors   = 0
     total_warnings = 0
@@ -313,33 +371,31 @@ def main() -> int:
     print(f"{BOLD}{BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━{RESET}")
     print()
 
-    # ── スキル一覧を収集 ────────────────────────────────
-    all_skill_names: set[str] = set()
-    if SKILLS_DIR.exists():
-        for d in SKILLS_DIR.iterdir():
-            if d.is_dir():
-                all_skill_names.add(d.name)
+    # ── スキル一覧を収集 (plugins/ ベース) ───────────────
+    skill_dirs      = collect_all_skill_dirs()
+    all_skill_names = {d.name for d in skill_dirs}
 
     # ── Skills チェック ─────────────────────────────────
-    print(f"{BOLD}📦 Skills ({len(all_skill_names)} 個){RESET}")
-    if SKILLS_DIR.exists():
-        for skill_dir in sorted(SKILLS_DIR.iterdir()):
-            if not skill_dir.is_dir():
-                continue
+    print(f"{BOLD}📦 Skills ({len(skill_dirs)} 個){RESET}")
+    if skill_dirs:
+        for skill_dir in skill_dirs:
             e, w = check_skill(skill_dir, all_skill_names)
             if e == 0 and w == 0:
                 ok(skill_dir.name)
             total_errors   += e
             total_warnings += w
     else:
-        warn("skills/ ディレクトリが見つからない")
+        warn("plugins/*/skills/ にスキルが見つからない")
         total_warnings += 1
 
     print()
 
     # ── Agents チェック ─────────────────────────────────
-    agent_files = sorted(AGENTS_DIR.glob("*.md")) if AGENTS_DIR.exists() else []
+    agent_files = collect_all_agent_files()
     print(f"{BOLD}🤖 Agents ({len(agent_files)} 個){RESET}")
+    if not agent_files:
+        warn("plugins/*/agents/ にエージェントが見つからない")
+        total_warnings += 1
     for agent_file in agent_files:
         e, w = check_agent(agent_file, all_skill_names)
         if e == 0 and w == 0:

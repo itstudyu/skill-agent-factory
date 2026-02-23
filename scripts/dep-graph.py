@@ -19,7 +19,7 @@ from pathlib import Path
 # 設定
 # ============================================================
 FACTORY_ROOT = Path(__file__).parent.parent
-SKILLS_DIR   = FACTORY_ROOT / "skills"
+PLUGINS_DIR  = FACTORY_ROOT / "plugins"
 
 # ── ANSI カラー ──────────────────────────────────────────
 GREEN  = "\033[32m"
@@ -65,6 +65,7 @@ def parse_frontmatter(filepath: Path) -> dict:
 # ============================================================
 def build_dep_graph() -> tuple[dict[str, list[str]], dict[str, bool]]:
     """
+    plugins/*/skills/*/metadata.md (fallback: SKILL.md) をスキャンして依存グラフを構築。
     returns:
       deps:       { skill_name: [required_skill, ...] }
       deprecated: { skill_name: True/False }
@@ -72,25 +73,36 @@ def build_dep_graph() -> tuple[dict[str, list[str]], dict[str, bool]]:
     deps: dict[str, list[str]] = {}
     deprecated: dict[str, bool] = {}
 
-    if not SKILLS_DIR.exists():
+    if not PLUGINS_DIR.exists():
         return deps, deprecated
 
-    for skill_dir in sorted(SKILLS_DIR.iterdir()):
-        if not skill_dir.is_dir():
+    for plugin_dir in sorted(PLUGINS_DIR.iterdir()):
+        if not plugin_dir.is_dir():
             continue
-        skill_md = skill_dir / "SKILL.md"
-        if not skill_md.exists():
+        skills_dir = plugin_dir / "skills"
+        if not skills_dir.exists():
             continue
 
-        fm = parse_frontmatter(skill_md)
-        name = fm.get("name", skill_dir.name)
-        deprecated[name] = (fm.get("status") == "deprecated")
+        for skill_dir in sorted(skills_dir.iterdir()):
+            if not skill_dir.is_dir():
+                continue
 
-        if "requires" in fm:
-            raw = fm["requires"].strip("[]")
-            deps[name] = [r.strip() for r in raw.split(",") if r.strip()]
-        else:
-            deps[name] = []
+            # metadata.md 優先、なければ SKILL.md にフォールバック
+            meta_md  = skill_dir / "metadata.md"
+            skill_md = skill_dir / "SKILL.md"
+            source = meta_md if meta_md.exists() else (skill_md if skill_md.exists() else None)
+            if source is None:
+                continue
+
+            fm   = parse_frontmatter(source)
+            name = fm.get("name", skill_dir.name)
+            deprecated[name] = (fm.get("status") == "deprecated")
+
+            if "requires" in fm:
+                raw = fm["requires"].strip("[]")
+                deps[name] = [r.strip() for r in raw.split(",") if r.strip()]
+            else:
+                deps[name] = []
 
     return deps, deprecated
 

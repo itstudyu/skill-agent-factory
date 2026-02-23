@@ -2,6 +2,7 @@
 name: devops-skill-eval
 description: Evaluates the quality and correctness of a skill by running test scenarios against it. Use when the user wants to test a skill before deploying, validate a newly created skill, check if a skill behaves as expected, or benchmark skill performance. Triggers on "스킬 테스트", "eval skill", "test skill", "スキルテスト", "validate skill", "skill quality check".
 tags: [devops, eval, quality, skill, validate, test]
+allowed-tools: Read, Write, Glob, Bash
 ---
 
 # Skill Eval — スキル品質検証

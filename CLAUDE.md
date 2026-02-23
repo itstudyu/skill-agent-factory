@@ -113,8 +113,8 @@ skill-agent-factory/
 │   └── project/           ← Project plugin (project-onboarding agent)
 │       ├── plugin.json
 │       └── agents/project-onboarding.md
-├── skills/                ← Legacy (devops-pr-description only)
-├── agents/                ← Legacy (skill-router deprecated)
+├── skills/                ← Legacy — 削除予定 (devops-pr-description: deprecated のみ残存)
+├── agents/                ← Legacy — 削除予定 (skill-router: deprecated)
 ├── .claude-plugin/
 │   └── plugin.json        ← Claude Code plugin manifest
 ├── standards/             ← Coding standards (detailed rules + examples)
@@ -306,6 +306,44 @@ After creating new skills or agents, remind the user:
 - Written in **English**
 - Start at **v1.0**, increment on updates
 - Descriptive names with category prefix (for skills)
+
+---
+
+## Versioning Strategy
+
+All assets (`metadata.md`, `SKILL.md`, agent files) carry a `version:` field. Follow these rules consistently.
+
+### Version Format: `vMAJOR.MINOR`
+
+| Change Type | Bump | Example | When |
+|-------------|------|---------|------|
+| Breaking — rename, remove steps, change output format | **MAJOR** | v1.0 → v2.0 | Existing users must adapt |
+| Non-breaking — new steps, improved instructions, new tags | **MINOR** | v1.0 → v1.1 | Backward compatible |
+| Spelling / comment / formatting only | **none** | stays v1.0 | No behavior change |
+
+### Workflow
+
+1. **Edit** the skill/agent content
+2. **Bump version** in `metadata.md` (and `SKILL.md` if it also has `version:`)
+3. **Run** `python3 scripts/sync-registry.py` — registry auto-reflects the new version
+4. **Run** `python3 scripts/lint-skills.py` — confirm no regressions
+5. **Commit** with a message that includes the version bump: e.g., `feat: devops-code-review v1.0 → v1.1`
+
+### Practical Examples
+
+```
+# MINOR bump — added a new check rule
+metadata.md:  version: v1.1
+SKILL.md:     version: v1.1
+
+# MAJOR bump — renamed output format (breaking)
+metadata.md:  version: v2.0
+SKILL.md:     version: v2.0
+```
+
+### No Individual Changelogs Needed
+
+`registry.md` acts as the central version ledger. Each `sync-registry.py` run updates the **Last Modified** column automatically. There is no need to maintain per-skill `CHANGELOG.md` files unless the skill is externally shared.
 
 ---
 
