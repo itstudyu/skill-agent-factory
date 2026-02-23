@@ -330,6 +330,60 @@ After creating new skills or agents, remind the user:
 
 ---
 
+## Agent Teams
+
+Skills across plugins are grouped into **teams** for coordinated execution. Teams are declared in each `plugin.json` and validated automatically by `make lint`.
+
+### Defined Teams
+
+| Team | Execution | Purpose |
+|------|-----------|---------|
+| `review-team` | **Parallel** | Code quality, security, architecture — run simultaneously |
+| `quality-team` | **Sequential** | Tests, comments, version check — run in order |
+| `commit-team` | **Sequential** | Git commit — final step |
+| `feature-team` | **Gated** | Requirements confirmed → design → implementation |
+
+### How to Register a Skill into a Team
+
+Add the skill name to the appropriate team in the plugin's `plugin.json`:
+
+```json
+// plugins/backend/plugin.json  (future plugin example)
+{
+  "name": "backend",
+  "teams": {
+    "review-team":  ["backend-code-review", "backend-api-review"],
+    "quality-team": ["backend-test-gen"],
+    "feature-team": ["backend-requirements"]
+  }
+}
+```
+
+**Rules:**
+- Only use team names from the defined list above — `make lint` will error on unknown names
+- Each skill can belong to **multiple teams**
+- Skills not yet ready for team use can be omitted from `teams:` entirely
+
+### Scaling Rule
+
+> When a new plugin is added, declare its `teams:` membership in `plugin.json` **before** creating the skill files.
+> This keeps team composition visible and auditable from one place.
+
+### Future: Team Orchestrators (implement when ≥ 3 plugins)
+
+When multiple plugins register to the same team, a dedicated orchestrator agent will be created in `plugins/teams/agents/`:
+
+```
+plugins/teams/agents/
+├── review-team.md    ← reads plugin.json, discovers members, runs in parallel
+├── quality-team.md   ← runs members sequentially with gate checks
+└── feature-team.md   ← confirms requirements gate before proceeding
+```
+
+Until then, `devops-pipeline` continues to handle full-pipeline orchestration.
+
+---
+
 ## Versioning Strategy
 
 All assets (`metadata.md`, `SKILL.md`, agent files) carry a `version:` field. Follow these rules consistently.

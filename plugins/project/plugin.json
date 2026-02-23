@@ -3,5 +3,9 @@
   "description": "Project onboarding: analyzes codebase and generates project-context/",
   "version": "1.0.0",
   "skills": [],
-  "agents": ["project-onboarding"]
+  "agents": ["project-onboarding"],
+  "teams": {
+    "feature-team": []
+  },
+  "_note": "project plugin has no skills; project-onboarding agent is invoked standalone before other teams"
 }

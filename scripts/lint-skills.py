@@ -10,6 +10,7 @@ install.sh から自動呼び出し、または単独実行:
   python3 scripts/lint-skills.py --strict   # 警告もエラー扱い
 """
 
+import json
 import os
 import re
 import sys
@@ -252,6 +253,58 @@ def check_agent(agent_file: Path, all_skill_names: set) -> tuple[int, int]:
 
 MAX_DEP_DEPTH = 3  # これ以上深い依存チェーンは警告
 
+KNOWN_TEAMS = {"review-team", "quality-team", "commit-team", "feature-team"}
+
+
+def check_teams(all_skill_names: set) -> tuple[int, int]:
+    """
+    plugins/*/plugin.json の teams: フィールドを検証する。
+    - 登録されたスキルが実際に存在するか
+    - チーム名が KNOWN_TEAMS に含まれるか
+    - plugin.json に teams: フィールドがあるか
+    Returns (errors, warnings)
+    """
+    errors = 0
+    warnings = 0
+
+    if not PLUGINS_DIR.exists():
+        return errors, warnings
+
+    for plugin_dir in sorted(PLUGINS_DIR.iterdir()):
+        if not plugin_dir.is_dir():
+            continue
+        pjson = plugin_dir / "plugin.json"
+        if not pjson.exists():
+            warn(f"[{plugin_dir.name}] plugin.json が存在しない")
+            warnings += 1
+            continue
+
+        try:
+            data = json.loads(pjson.read_text(encoding="utf-8"))
+        except json.JSONDecodeError as e:
+            err(f"[{plugin_dir.name}] plugin.json が不正な JSON: {e}")
+            errors += 1
+            continue
+
+        if "teams" not in data:
+            warn(f"[{plugin_dir.name}] plugin.json に teams: フィールドがない — Agent Teams に参加しない")
+            warnings += 1
+            continue
+
+        teams = data["teams"]
+        for team_name, members in teams.items():
+            # 未知のチーム名チェック
+            if team_name not in KNOWN_TEAMS:
+                warn(f"[{plugin_dir.name}] teams.{team_name} — 未定義のチーム名 (既知: {', '.join(sorted(KNOWN_TEAMS))})")
+                warnings += 1
+            # メンバーの存在チェック
+            for skill in members:
+                if skill not in all_skill_names:
+                    err(f"[{plugin_dir.name}] teams.{team_name}: '{skill}' — plugins/ に存在しないスキルを参照")
+                    errors += 1
+
+    return errors, warnings
+
 
 def _build_deps() -> dict[str, list[str]]:
     """requires: フィールドから依存グラフを構築 (plugins/ ベース)"""
@@ -420,6 +473,16 @@ def main() -> int:
     if depth_warnings == 0:
         ok(f"全チェーン深さ {MAX_DEP_DEPTH} 未満")
     total_warnings += depth_warnings
+
+    print()
+
+    # ── Teams 整合性チェック ─────────────────────────────
+    print(f"{BOLD}🤝 Teams 整合性チェック{RESET}")
+    teams_errors, teams_warnings = check_teams(all_skill_names)
+    total_errors   += teams_errors
+    total_warnings += teams_warnings
+    if teams_errors == 0 and teams_warnings == 0:
+        ok("全 teams エントリの参照が正常")
 
     print()
 

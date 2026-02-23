@@ -9,5 +9,9 @@
     "figma-framework-figma-mapper",
     "figma-responsive-validator"
   ],
-  "agents": ["figma-to-code"]
+  "agents": ["figma-to-code"],
+  "teams": {
+    "review-team":  ["figma-responsive-validator"],
+    "feature-team": ["figma-design-analyzer", "figma-design-token-extractor", "figma-framework-figma-mapper", "figma-code-sync"]
+  }
 }

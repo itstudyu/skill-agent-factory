@@ -14,5 +14,11 @@
     "devops-test-gen",
     "devops-version-check"
   ],
-  "agents": ["devops-pipeline"]
+  "agents": ["devops-pipeline"],
+  "teams": {
+    "review-team":  ["devops-code-review", "devops-arch-review", "devops-safety-check"],
+    "quality-team": ["devops-test-gen", "devops-japanese-comments", "devops-version-check"],
+    "commit-team":  ["devops-git-commit"],
+    "feature-team": ["devops-requirements", "devops-frontend-review"]
+  }
 }
