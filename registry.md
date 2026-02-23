@@ -16,28 +16,28 @@
 
 ## Registry Table
 
-| Name | Type | Category | Tags | Version | Description | File Path | Last Modified |
-|------|------|----------|------|---------|-------------|-----------|---------------|
-| devops-arch-review | skill | devops | `devops`, `review`, `architecture`, `structure`, `standards` | v1.0 | Architecture and coding standards review. Use when the user asks to check code structure, folder ... | skills/devops-arch-review/SKILL.md | 2026-02-22 |
-| devops-code-review | skill | devops | `devops`, `review`, `code`, `quality`, `bugs`, `logic` | v1.0 | Code quality and logic review. Run after code is written. Verifies AI-generated code has no bugs,... | skills/devops-code-review/SKILL.md | 2026-02-22 |
-| devops-frontend-review | skill | devops | `devops`, `review`, `frontend`, `ui`, `pixel-perfect`, `screenshot` | v1.0 | Frontend pixel-perfect review. Run after frontend code is written. Compares implementation agains... | skills/devops-frontend-review/SKILL.md | 2026-02-22 |
-| devops-git-commit | skill | devops | `devops`, `git`, `commit`, `branch`, `version-control` | v1.0 | Git commit with branch strategy. Run at the END of every development task. Creates a feature bran... | skills/devops-git-commit/SKILL.md | 2026-02-22 |
-| devops-japanese-comments | skill | devops | `devops`, `japanese`, `comments`, `logs`, `localization` | v1.0 | Enforce Japanese language in code comments and log messages. Run after code review. Converts all ... | skills/devops-japanese-comments/SKILL.md | 2026-02-22 |
-| devops-pr-description | skill | devops | — | v1.0 | DEPRECATED — このスキルは削除予定です。PR説明文の生成はdevops-git-commitスキルに統合されています。 | skills/devops-pr-description/SKILL.md | 2026-02-22 |
-| devops-requirements | skill | devops | `devops`, `requirements`, `planning`, `spec`, `feature` | v1.0 | Development requirements gathering. Use at the START of every development request before writing ... | skills/devops-requirements/SKILL.md | 2026-02-22 |
-| devops-safety-check | skill | devops | `devops`, `security`, `safety`, `secrets`, `vulnerability` | v1.0 | Lightweight code security check. Run after code is written. Checks for secrets, vulnerable depend... | skills/devops-safety-check/SKILL.md | 2026-02-22 |
-| devops-skill-eval | skill | devops | `devops`, `eval`, `quality`, `skill`, `validate`, `test` | v1.0 | Evaluates the quality and correctness of a skill by running test scenarios against it. Use when t... | skills/devops-skill-eval/SKILL.md | 2026-02-22 |
-| devops-test-gen | skill | devops | `devops`, `test`, `generate`, `unit-test`, `coverage` | v1.0 | Automatically generate unit tests for newly written code. Run after code review is clean. Generat... | skills/devops-test-gen/SKILL.md | 2026-02-22 |
-| devops-version-check | skill | devops | `devops`, `version`, `dependency`, `package`, `compatibility` | v1.0 | Language version and dependency safety check. Verifies code uses correct syntax for the project's... | skills/devops-version-check/SKILL.md | 2026-02-22 |
-| figma-code-sync | skill | figma | `figma`, `sync`, `verify`, `design-match`, `implementation` | v1.0 | Verifies that the implemented code matches the Figma design mapping. Use when you want to validat... | skills/figma-code-sync/SKILL.md | 2026-02-22 |
-| figma-design-analyzer | skill | figma | `figma`, `design`, `analyze`, `blueprint`, `frontend`, `planning` | v1.0 | Analyzes Figma designs to produce a frontend implementation blueprint before coding begins. Captu... | skills/figma-design-analyzer/SKILL.md | 2026-02-22 |
-| figma-design-token-extractor | skill | figma | `figma`, `design-token`, `colors`, `typography`, `css`, `extract` | v1.0 | Extracts design tokens (colors, fonts, spacing, shadows, border-radius, etc.) from Figma files vi... | skills/figma-design-token-extractor/SKILL.md | 2026-02-22 |
-| figma-framework-figma-mapper | skill | figma | `figma`, `framework`, `component`, `mapping`, `ui-kit` | v1.0 | Maps UI framework components to Figma design components. Supports PrimeFaces as a preset (with Fi... | skills/figma-framework-figma-mapper/SKILL.md | 2026-02-22 |
-| figma-responsive-validator | skill | figma | `figma`, `responsive`, `validate`, `mobile`, `layout`, `breakpoint` | v1.0 | Validates responsive design compliance of frontend code across Mobile, Tablet, and Desktop breakp... | skills/figma-responsive-validator/SKILL.md | 2026-02-22 |
-| devops-pipeline | agent | devops | — | v1.0 | Development pipeline orchestrator. Called by skill-router for development tasks. Trigger directly... | agents/devops-pipeline.md | 2026-02-22 |
-| figma-to-code | agent | figma | — | v1.0 | Converts Figma designs into production-ready frontend code. Use proactively when the user wants t... | agents/figma-to-code.md | 2026-02-22 |
-| project-onboarding | agent | project | — | v1.0 | Project onboarding agent. Auto-detects existing vs new projects, analyzes code patterns, and gene... | agents/project-onboarding.md | 2026-02-22 |
-| skill-router | agent | skill | — | v1.0 | PRIMARY ENTRY POINT for ALL user requests. Always invoke skill-router first — it analyzes intent ... | agents/skill-router.md | 2026-02-22 |
+| Name | Type | Category | Model | Tags | Version | Description | File Path | Last Modified |
+|------|------|----------|-------|------|---------|-------------|-----------|---------------|
+| devops-arch-review | skill | devops | sonnet | `review`, `architecture`, `structure`, `standards`, `naming`, `patterns` | v1.0 | User asks to check code structure, folder layout, naming conventions, error handling patterns, tr... | skills/devops-arch-review/SKILL.md | 2026-02-23 |
+| devops-code-review | skill | devops | sonnet | `review`, `code`, `quality`, `bugs`, `logic`, `performance` | v1.0 | Run after code is written. User asks to review code, check for bugs, logic errors, memory leaks, ... | skills/devops-code-review/SKILL.md | 2026-02-23 |
+| devops-frontend-review | skill | devops | sonnet | `review`, `frontend`, `ui`, `pixel-perfect`, `screenshot`, `design-match` | v1.0 | Run after frontend code is written. User provides a screenshot, image, or Figma link to compare a... | skills/devops-frontend-review/SKILL.md | 2026-02-23 |
+| devops-git-commit | skill | devops | haiku | `git`, `commit`, `branch`, `version-control` | v1.0 | Run at the END of every development task. User wants to commit code, create a branch, or finalize... | skills/devops-git-commit/SKILL.md | 2026-02-23 |
+| devops-japanese-comments | skill | devops | haiku | `japanese`, `comments`, `logs`, `localization`, `i18n` | v1.0 | Run after code review. User wants to enforce Japanese in comments/logs, convert English comments ... | skills/devops-japanese-comments/SKILL.md | 2026-02-23 |
+| devops-pr-description | skill | devops | sonnet | — | v1.0 | DEPRECATED — このスキルは削除予定です。PR説明文の生成はdevops-git-commitスキルに統合されています。 | skills/devops-pr-description/SKILL.md | 2026-02-23 |
+| devops-requirements | skill | devops | sonnet | `requirements`, `planning`, `spec`, `feature`, `analysis` | v1.0 | Run at the START of every development request, before writing any code. User wants to implement a... | skills/devops-requirements/SKILL.md | 2026-02-23 |
+| devops-safety-check | skill | devops | haiku | `security`, `safety`, `secrets`, `vulnerability`, `sql-injection`, `xss` | v1.0 | Run after code is written. Quick security scan for secrets, SQL injection, XSS, vulnerable depend... | skills/devops-safety-check/SKILL.md | 2026-02-23 |
+| devops-skill-eval | skill | devops | sonnet | `eval`, `quality`, `skill`, `validate`, `test`, `benchmark` | v1.0 | User wants to test a skill before deploying, validate a newly created skill, or benchmark skill p... | skills/devops-skill-eval/SKILL.md | 2026-02-23 |
+| devops-test-gen | skill | devops | sonnet | `test`, `generate`, `unit-test`, `coverage`, `jest`, `pytest` | v1.0 | Run after code review is clean. User wants to generate unit tests for new code. Detects framework... | skills/devops-test-gen/SKILL.md | 2026-02-23 |
+| devops-version-check | skill | devops | haiku | `version`, `dependency`, `package`, `compatibility`, `deprecated` | v1.0 | User wants to verify code syntax for the project language version, check deprecated APIs, or vali... | skills/devops-version-check/SKILL.md | 2026-02-23 |
+| figma-code-sync | skill | figma | sonnet | `figma`, `sync`, `verify`, `design-match`, `implementation`, `validate` | v1.0 | User wants to validate that implemented code matches the Figma design, check for missing componen... | skills/figma-code-sync/SKILL.md | 2026-02-23 |
+| figma-design-analyzer | skill | figma | sonnet | `figma`, `design`, `analyze`, `blueprint`, `frontend`, `planning`, `implementation-plan` | v1.0 | Before coding begins. User wants to analyze a Figma design and produce a frontend implementation ... | skills/figma-design-analyzer/SKILL.md | 2026-02-23 |
+| figma-design-token-extractor | skill | figma | sonnet | `figma`, `design-token`, `colors`, `typography`, `css`, `scss`, `extract` | v1.0 | User wants to extract design tokens from Figma (colors, fonts, spacing, shadows) and convert to C... | skills/figma-design-token-extractor/SKILL.md | 2026-02-23 |
+| figma-framework-figma-mapper | skill | figma | sonnet | `figma`, `framework`, `component`, `mapping`, `ui-kit`, `primefaces` | v1.0 | User wants to map UI framework components (PrimeFaces, custom) to Figma design components. Genera... | skills/figma-framework-figma-mapper/SKILL.md | 2026-02-23 |
+| figma-responsive-validator | skill | figma | haiku | `figma`, `responsive`, `validate`, `mobile`, `layout`, `breakpoint`, `tablet` | v1.0 | User wants to validate responsive design across Mobile, Tablet, Desktop breakpoints. Detects layo... | skills/figma-responsive-validator/SKILL.md | 2026-02-23 |
+| devops-pipeline | agent | devops | sonnet | — | v1.0 | Development pipeline orchestrator. Called by skill-router for development tasks. Trigger directly... | agents/devops-pipeline.md | 2026-02-23 |
+| figma-to-code | agent | figma | opus | — | v1.0 | Converts Figma designs into production-ready frontend code. Use proactively when the user wants t... | agents/figma-to-code.md | 2026-02-23 |
+| project-onboarding | agent | project | sonnet | — | v1.0 | Project onboarding agent. Auto-detects existing vs new projects, analyzes code patterns, and gene... | agents/project-onboarding.md | 2026-02-23 |
+| skill-router | agent | skill | sonnet | — | v1.0 | Central skill router for all user requests. Uses 2-phase matching — lightweight metadata.md scan ... | agents/skill-router.md | 2026-02-23 |
 
 ---
 
@@ -66,4 +66,4 @@
 - **MCP Servers**: 0
 - **Output Styles**: 0
 
-*Last updated: 2026-02-22*
+*Last updated: 2026-02-23*

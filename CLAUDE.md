@@ -7,7 +7,7 @@
 
 ## Project Overview
 
-**Skill & Agent Factory** is a centralized workspace for creating, managing, and using Claude Code skills and agents. When a user describes a task, Claude routes it through the **skill-router** agent, which dynamically reads `registry.md` and selects the right skill(s) automatically.
+**Skill & Agent Factory** is a centralized workspace for creating, managing, and using Claude Code skills and agents. When a user describes a task, Claude routes it through the **skill-router** agent, which reads all `skills/*/metadata.md` files (lightweight tag-based filter) then reads `SKILL.md` only for matched candidates.
 
 Asset types supported:
 1. **Skills** (`SKILL.md`) — Reusable capability modules for Claude Code
@@ -27,8 +27,8 @@ All assets are **Claude Code-compatible** and ready to copy directly into any pr
 ```
 User Request
     ↓
-skill-router          ← reads registry.md live → selects skill(s)
-    ↓
+skill-router          ← Phase 1: reads all metadata.md (tag scan, ~10 lines each)
+    ↓                    Phase 2: reads SKILL.md for top 3~5 candidates only
 Domain Skill(s)       ← backend / frontend / database / figma / etc.
     ↓
 devops-pipeline       ← quality gate for all coding tasks
@@ -97,17 +97,14 @@ Apply to **every** file written or modified, regardless of language or category:
 skill-agent-factory/
 ├── CLAUDE.md              ← This file (auto-read by Claude Code)
 ├── README.md              ← GitHub documentation
-├── registry.md            ← Master registry of ALL assets (auto-updated)
-├── install.sh             ← Installer: symlinks + orphan cleanup + lint + sync
-├── skills/                ← ALL skills (flat, category-prefixed names)
+├── registry.md            ← Master registry of ALL assets
+├── install.sh             ← Global installer (symlinks to ~/.claude/)
+├── skills/                ← ALL skills live here (flat, category-prefixed names)
 │   └── {category}-{name}/
-│       └── SKILL.md
-├── agents/                ← ALL agents
+│       ├── metadata.md    ← Phase A: lightweight routing file (tags, use-when, model)
+│       └── SKILL.md       ← Full instructions (loaded only when skill is selected)
+├── agents/                ← ALL agents live here (flat)
 │   └── {agent-name}.md
-├── scripts/               ← Automation utilities
-│   ├── sync-registry.py   ← Auto-syncs registry.md + README.md
-│   ├── lint-skills.py     ← Quality checker (run by install.sh automatically)
-│   └── dep-graph.py       ← Dependency tree + reverse lookup
 ├── .claude-plugin/
 │   └── plugin.json        ← Claude Code plugin manifest
 ├── standards/             ← Coding standards (detailed rules + examples)
@@ -120,7 +117,7 @@ skill-agent-factory/
 │   ├── mcp.md
 │   ├── output-styles.md
 │   └── agent-teams.md
-└── categories/            ← Category context docs (reference only — skills live in skills/)
+└── categories/            ← Category context files (CLAUDE.md only, no skills here)
     ├── backend/CLAUDE.md
     ├── frontend/CLAUDE.md
     ├── database/CLAUDE.md
@@ -196,21 +193,40 @@ Always read the relevant doc in `_docs/` before writing:
 
 ### Step 4 — Create the Asset
 
-**Skills** go in: `skills/{category}-{skill-name}/SKILL.md`
+**Skills** require TWO files:
+
+`skills/{category}-{skill-name}/metadata.md` — lightweight routing file (always loaded)
+```yaml
+---
+name: backend-code-review
+category: devops
+tags: [review, code, quality, bugs, backend]
+model: sonnet
+use-when: >
+  User asks to review backend code for quality, security, or best practices.
+  Triggers: "코드 리뷰", "review this", "check for bugs", "バグチェック"
+---
+```
+
+`skills/{category}-{skill-name}/SKILL.md` — full instructions (loaded only when selected)
 ```yaml
 ---
 name: backend-code-review
 description: Reviews backend code for quality, security, and best practices.
-  Use when the user asks to review, check, or audit backend/server-side code.
-tags: [backend, review, code, quality]
 ---
 
 # Backend Code Review
 [Instructions...]
 ```
 
-`tags:` は skill-router の Phase 1 tag-intersection フィルターで使用される。
-スキルのドメイン (devops, figma, backend 等) とアクション (review, generate, validate 等) を含めること。
+**metadata.md 필수 필드:**
+| Field | Description |
+|-------|-------------|
+| `name` | 스킬 고유 이름 (폴더명과 일치) |
+| `category` | `devops` / `figma` / `backend` 등 |
+| `tags` | 라우팅 태그 배열 — 정밀하게 작성할수록 정확도 상승 |
+| `model` | `haiku` (빠른 단순 작업) / `sonnet` (복잡한 분석) |
+| `use-when` | 트리거 키워드 포함 자연어 설명 (한국어 + 영어 + 일본어) |
 
 **Agents** go in: `agents/{agent-name}.md`
 ```yaml
@@ -224,38 +240,48 @@ model: sonnet
 [System prompt...]
 ```
 
-### Step 5 — Run install.sh
+### Step 5 — Auto-sync Registry
 
+After creating or updating ANY asset, run:
 ```bash
-./install.sh
+python3 scripts/sync-registry.py
 ```
+This auto-updates `registry.md` and `README.md` from `metadata.md` files.
+- Increment version manually in `metadata.md` on meaningful updates (v1.0 → v1.1)
 
-이 명령 하나로 아래가 자동 실행된다:
-1. `~/.claude/skills/` + `~/.claude/agents/` 심링크 생성/갱신
-2. 삭제된 스킬의 dangling symlink 자동 정리
-3. `sync-registry.py` → registry.md + README.md 자동 갱신
-4. `lint-skills.py` → frontmatter / requires / dep chain 품질 체크
+### Step 6 — Update README.md (auto via sync-registry.py)
 
-**registry.md와 README.md는 수동으로 편집하지 않는다.** sync-registry.py가 자동으로 관리한다.
+`sync-registry.py` handles README updates automatically. Manual edits only needed for:
 
-### Step 6 — Verify with lint
+What to update depending on the change:
 
-install.sh 실행 후 lint 결과를 확인하고 ERROR가 있으면 수정:
+| Change | README section to update |
+|--------|--------------------------|
+| New skill added | **Current Skills & Agents** table |
+| New agent added | **Current Skills & Agents** table |
+| New category added | **Categories** table |
+| New folder/file added | **What's Inside** directory tree |
+| Pipeline step changed | **DevOps Pipeline** section |
+| Coding rule changed | **Global Coding Standards** table |
+| Installation changed | **Installation** section |
 
-```bash
-python3 scripts/lint-skills.py
+### Step 7 — Remind User to Re-run install.sh
 
-# 스킬 삭제 전 영향 범위 확인
-python3 scripts/dep-graph.py --reverse {skill-name}
-```
+After creating new skills or agents, remind the user:
+> "새 스킬/에이전트를 추가했으니 `./install.sh` 를 다시 실행해 주세요!"
 
 ---
 
 ## Quality Standards
 
 ### Skills must have:
-- YAML frontmatter: `name`, `description` with **clear trigger keywords**, `tags` (required)
-- `tags:` — lowercase list matching intent keywords used by skill-router Phase 1 filter
+
+**metadata.md** (routing layer — required):
+- `name`, `category`, `tags` (정밀한 태그), `model`, `use-when` (트리거 키워드 포함)
+- Keep under 15 lines — this file is always loaded
+
+**SKILL.md** (instruction layer — required):
+- `name`, `description` with trigger keywords
 - Step-by-step instructions Claude will follow
 - Examples (when helpful)
 - Keep under 500 lines; move details to supporting files
@@ -279,11 +305,11 @@ python3 scripts/dep-graph.py --reverse {skill-name}
 - **Write all assets in English**
 - **Always confirm** before overwriting existing assets
 - **Always ask** when requirements are unclear — never assume
-- **Never manually edit `registry.md` or README skills table** — run `./install.sh` instead
-- **Remind user to run `./install.sh`** after adding/removing skills or agents
-- **Run `dep-graph.py --reverse`** before deleting any skill to check impact
+- **Always update `registry.md`** after any creation or update
+- **Always update `README.md`** when anything in the project changes — skills, agents, structure, rules, pipeline
+- **Remind user to run `./install.sh`** after adding new skills/agents
 
 ---
 
 *Last updated: 2026-02-23*
-*Project: Skill & Agent Factory v1.2*
+*Project: Skill & Agent Factory v1.3 (Phase A: metadata.md routing)*

@@ -184,28 +184,29 @@ alias claude='claude --plugin-dir ~/skill-agent-factory'
 
 ### Devops Skills
 
-| Skill | Purpose |
-|-------|---------|
-| `devops-arch-review` | Architecture and coding standards review. Use when the user asks to check code s |
-| `devops-code-review` | Code quality and logic review. Run after code is written. Verifies AI-generated  |
-| `devops-frontend-review` | Frontend pixel-perfect review. Run after frontend code is written. Compares impl |
-| `devops-git-commit` | Git commit with branch strategy. Run at the END of every development task. Creat |
-| `devops-japanese-comments` | Enforce Japanese language in code comments and log messages. Run after code revi |
-| `devops-requirements` | Development requirements gathering. Use at the START of every development reques |
-| `devops-safety-check` | Lightweight code security check. Run after code is written. Checks for secrets,  |
-| `devops-skill-eval` | Evaluates the quality and correctness of a skill by running test scenarios again |
-| `devops-test-gen` | Automatically generate unit tests for newly written code. Run after code review  |
-| `devops-version-check` | Language version and dependency safety check. Verifies code uses correct syntax  |
+| Skill | Model | Tags | Purpose |
+|-------|-------|------|---------|
+| `devops-arch-review` | sonnet | `review`, `architecture`, `structure`, `standards`, `naming`, `patterns` | User asks to check code structure, folder layout, naming conventions, error hand |
+| `devops-code-review` | sonnet | `review`, `code`, `quality`, `bugs`, `logic`, `performance` | Run after code is written. User asks to review code, check for bugs, logic error |
+| `devops-frontend-review` | sonnet | `review`, `frontend`, `ui`, `pixel-perfect`, `screenshot`, `design-match` | Run after frontend code is written. User provides a screenshot, image, or Figma  |
+| `devops-git-commit` | haiku | `git`, `commit`, `branch`, `version-control` | Run at the END of every development task. User wants to commit code, create a br |
+| `devops-japanese-comments` | haiku | `japanese`, `comments`, `logs`, `localization`, `i18n` | Run after code review. User wants to enforce Japanese in comments/logs, convert  |
+| `devops-pr-description` | sonnet | — | DEPRECATED — このスキルは削除予定です。PR説明文の生成はdevops-git-commitスキルに統合されています。 |
+| `devops-requirements` | sonnet | `requirements`, `planning`, `spec`, `feature`, `analysis` | Run at the START of every development request, before writing any code. User wan |
+| `devops-safety-check` | haiku | `security`, `safety`, `secrets`, `vulnerability`, `sql-injection`, `xss` | Run after code is written. Quick security scan for secrets, SQL injection, XSS,  |
+| `devops-skill-eval` | sonnet | `eval`, `quality`, `skill`, `validate`, `test`, `benchmark` | User wants to test a skill before deploying, validate a newly created skill, or  |
+| `devops-test-gen` | sonnet | `test`, `generate`, `unit-test`, `coverage`, `jest`, `pytest` | Run after code review is clean. User wants to generate unit tests for new code.  |
+| `devops-version-check` | haiku | `version`, `dependency`, `package`, `compatibility`, `deprecated` | User wants to verify code syntax for the project language version, check depreca |
 
 ### Figma Skills
 
-| Skill | Purpose |
-|-------|---------|
-| `figma-code-sync` | Verifies that the implemented code matches the Figma design mapping. Use when yo |
-| `figma-design-analyzer` | Analyzes Figma designs to produce a frontend implementation blueprint before cod |
-| `figma-design-token-extractor` | Extracts design tokens (colors, fonts, spacing, shadows, border-radius, etc.) fr |
-| `figma-framework-figma-mapper` | Maps UI framework components to Figma design components. Supports PrimeFaces as  |
-| `figma-responsive-validator` | Validates responsive design compliance of frontend code across Mobile, Tablet, a |
+| Skill | Model | Tags | Purpose |
+|-------|-------|------|---------|
+| `figma-code-sync` | sonnet | `figma`, `sync`, `verify`, `design-match`, `implementation`, `validate` | User wants to validate that implemented code matches the Figma design, check for |
+| `figma-design-analyzer` | sonnet | `figma`, `design`, `analyze`, `blueprint`, `frontend`, `planning`, `implementation-plan` | Before coding begins. User wants to analyze a Figma design and produce a fronten |
+| `figma-design-token-extractor` | sonnet | `figma`, `design-token`, `colors`, `typography`, `css`, `scss`, `extract` | User wants to extract design tokens from Figma (colors, fonts, spacing, shadows) |
+| `figma-framework-figma-mapper` | sonnet | `figma`, `framework`, `component`, `mapping`, `ui-kit`, `primefaces` | User wants to map UI framework components (PrimeFaces, custom) to Figma design c |
+| `figma-responsive-validator` | haiku | `figma`, `responsive`, `validate`, `mobile`, `layout`, `breakpoint`, `tablet` | User wants to validate responsive design across Mobile, Tablet, Desktop breakpoi |
 
 ### Agents
 
@@ -214,9 +215,8 @@ alias claude='claude --plugin-dir ~/skill-agent-factory'
 | `devops-pipeline` | sonnet | Development pipeline orchestrator. Called by skill-router for development tasks. |
 | `figma-to-code` | opus | Converts Figma designs into production-ready frontend code. Use proactively when |
 | `project-onboarding` | sonnet | Project onboarding agent. Auto-detects existing vs new projects, analyzes code p |
-| `skill-router` | sonnet | PRIMARY ENTRY POINT for ALL user requests. Always invoke skill-router first — it |
+| `skill-router` | sonnet | Central skill router for all user requests. Uses 2-phase matching — lightweight  |
 
----
 
 ## Automation Scripts
 
