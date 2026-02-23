@@ -57,16 +57,18 @@ This means Claude only reads what it needs, keeping context lean.
 
 ## Agent Teams
 
-Skills across plugins are grouped into **teams** for coordinated execution. Team membership is declared in each `plugin.json` and validated by `make lint`.
+Skills across plugins are grouped into **teams** for coordinated execution. Team membership is declared in each `plugin.json` — auto-updated by `make sync`.
 
-| Team | Execution | Skills |
-|------|-----------|--------|
-| `review-team` | **Parallel** | code-review + arch-review + safety-check + responsive-validator |
-| `quality-team` | **Sequential** | test-gen + japanese-comments + version-check |
-| `commit-team` | **Sequential** | git-commit |
-| `feature-team` | **Gated** | requirements → design-analyzer → implementation |
+<!-- TEAMS_TABLE_START -->
+| Team | Execution | Members |
+|------|-----------|---------|
+| `commit-team` | **Sequential** | devops-git-commit |
+| `feature-team` | **Gated** | devops-requirements, devops-frontend-review, figma-design-analyzer, figma-design-token-extractor, figma-framework-figma-mapper, figma-code-sync |
+| `quality-team` | **Sequential** | devops-test-gen, devops-japanese-comments, devops-version-check |
+| `review-team` | **Parallel** | devops-code-review, devops-arch-review, devops-safety-check, figma-responsive-validator |
+<!-- TEAMS_TABLE_END -->
 
-When a new plugin is added, declare its team membership in `plugin.json` before creating skill files. `make lint` will catch invalid team names or broken references automatically.
+When a new plugin is added, declare its team membership in `plugin.json` before creating skill files. `make lint` catches invalid team names or broken references automatically.
 
 > **Planned:** `plugins/teams/agents/` orchestrators (implement when ≥ 3 plugins registered per team)
 

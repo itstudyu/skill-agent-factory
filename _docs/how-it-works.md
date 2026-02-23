@@ -1,6 +1,6 @@
 # Skill Agent Factory — 동작 흐름 정리
 
-> 전체 에이전트 4개 + 스킬 15개가 어떻게 연결되어 움직이는지를 단계별로 설명합니다.
+> Plugin 기반 구조, 3-Tier 스킬 아키텍처, Agent Teams 패턴이 어떻게 연결되어 움직이는지를 단계별로 설명합니다.
 > 최종 업데이트: 2026-02-23
 
 ---
@@ -11,13 +11,11 @@
 사용자 요청
     │
     ▼
-┌─────────────────────────────────────────┐
-│   skill-router  (PRIMARY ENTRY POINT)   │
-│   Step 0: model-strategy.md 읽기        │
-│   Phase 1: registry.md 빠른 필터        │
-│   Phase 2: SKILL.md 정밀 매칭           │
-│   Phase 3: requires: 의존성 해결        │
-└────────────────┬────────────────────────┘
+┌──────────────────────────────────────────────┐
+│   CLAUDE.md (PRIMARY ENTRY POINT)            │
+│   • 모든 개발 요청을 devops-pipeline으로 라우팅  │
+│   • registry.md/metadata.md로 스킬 자동 선택   │
+└────────────────┬─────────────────────────────┘
                  │
     ┌────────────┼──────────────────┐
     │            │                  │
@@ -26,28 +24,87 @@ devops-     figma-to-code    project-
 pipeline      (에이전트)      onboarding
 (에이전트)                    (에이전트)
     │
-15개 스킬
+    ├── review-team   (병렬)
+    ├── quality-team  (순차)
+    ├── commit-team   (순차)
+    └── feature-team  (게이트)
 ```
 
-**에이전트 4개**
+**에이전트 3개**
 
-| 에이전트 | 역할 | 모델 |
-|---------|------|------|
-| `skill-router` | 모든 요청의 진입점, 라우팅 | sonnet |
-| `devops-pipeline` | 개발 파이프라인 오케스트레이터 | sonnet |
-| `figma-to-code` | Figma → 프로덕션 코드 변환 | opus |
-| `project-onboarding` | 프로젝트 최초 1회 초기화 | sonnet |
+| 에이전트 | 역할 | 모델 | 플러그인 |
+|---------|------|------|---------|
+| `devops-pipeline` | 개발 파이프라인 오케스트레이터 | sonnet | devops |
+| `figma-to-code` | Figma → 프로덕션 코드 변환 | opus | figma |
+| `project-onboarding` | 프로젝트 최초 1회 초기화 | sonnet | project |
 
-**스킬 15개**
+**스킬 15개 (2개 플러그인)**
 
-| 카테고리 | 스킬 |
+| 플러그인 | 스킬 |
 |---------|------|
 | devops (10개) | requirements, safety-check, code-review, arch-review, japanese-comments, frontend-review, version-check, test-gen, git-commit, skill-eval |
 | figma (5개) | design-token-extractor, framework-figma-mapper, design-analyzer, code-sync, responsive-validator |
 
 ---
 
-## 1. 프로젝트 시작 — project-onboarding
+## 1. 플러그인 구조 — plugins/
+
+모든 스킬과 에이전트는 플러그인 단위로 그룹화됩니다.
+
+```
+plugins/
+├── devops/
+│   ├── plugin.json              ← 플러그인 메타 + 팀 멤버 선언
+│   ├── agents/devops-pipeline.md
+│   └── skills/
+│       └── devops-code-review/
+│           ├── metadata.md      ← Tier 1: 라우팅용 (항상 로드)
+│           ├── SKILL.md         ← Tier 2: 전체 지침 (선택 시 로드)
+│           └── resources/       ← Tier 3: 체크리스트/템플릿 (요청 시)
+├── figma/
+│   ├── plugin.json
+│   ├── agents/figma-to-code.md
+│   └── skills/...
+└── project/
+    ├── plugin.json
+    └── agents/project-onboarding.md
+```
+
+### 3-Tier 스킬 아키텍처
+
+| Tier | 파일 | 로드 시점 | 내용 |
+|------|------|---------|------|
+| **Tier 1** | `metadata.md` | **항상** — 경량 라우팅 (~10줄) | tags, use-when, model, version |
+| **Tier 2** | `SKILL.md` | 스킬 선택 시만 | 전체 지침, STEP 정의 |
+| **Tier 3** | `resources/` | 필요 시 on-demand | 체크리스트, 템플릿, 예시 |
+
+이 방식으로 Claude는 필요한 것만 읽어 컨텍스트를 최소화합니다.
+
+---
+
+## 2. 라우팅 방식
+
+### skill-router는 더 이상 사용하지 않습니다 (deprecated)
+
+`CLAUDE.md`가 직접 라우팅 규칙을 담습니다:
+
+```
+모든 개발 요청
+    → devops-pipeline (자동)
+
+Figma URL 포함 요청
+    → devops-pipeline 내 FIGMA_PREFLIGHT
+    → figma-to-code 에이전트에 위임
+
+프로젝트 초기화 (project-context/ 없을 때)
+    → project-onboarding (한 번만 실행)
+```
+
+스킬 선택은 `metadata.md`의 `tags:` 와 `use-when:` 필드를 기반으로 자동 매칭됩니다.
+
+---
+
+## 3. 프로젝트 시작 — project-onboarding
 
 **언제:** 새 프로젝트에서 처음 한 번만 실행
 
@@ -80,66 +137,19 @@ STEP 3: project-context/ 생성
 
 ---
 
-## 2. 요청 라우팅 — skill-router
+## 4. 개발 파이프라인 — devops-pipeline
 
-**모든 요청의 첫 번째 관문. devops-pipeline, figma-to-code를 직접 호출하지 말 것.**
-
-```
-Step 0-1: _docs/model-strategy.md 읽기
-    └── 태스크 타입별 최적 모델 파악
-        (Figma→코드: opus / 코드작업: sonnet / 경량: haiku)
-
-Step 0-2: project-context 존재 체크 (코딩 요청인 경우만)
-    ├── project-context/structure.md 있음 → 정상 진행
-    └── 없음 → 사용자에게 선택지 제시
-        A) project-onboarding 실행 후 재개 (추천)
-        B) 그냥 진행
-
-Phase 1: registry.md Tags 빠른 필터
-    └── 요청에서 인텐트 태그 추출 → SKILL.md의 tags: 와 교집합 계산
-        교집합 1개↑ → 후보 / 교집합 없으면 description 폴백
-        목표: 후보 3~5개로 좁힘
-        ※ 자연어 description 매칭보다 정밀 → 스킬 50개↑에서도 충돌 없음
-
-Phase 2: SKILL.md 정밀 매칭
-    └── 각 후보의 SKILL.md를 직접 읽어 스코어 계산
-        tags 교집합 +3 / "Use when..." 일치 +4 / 카테고리 일치 +2
-        7점↑ → 실행 / 4~6점 → 보조 / 4점↓ → 제외
-
-Phase 3: requires: 의존성 해결
-    └── 선택된 스킬의 requires: 필드 확인
-        → 의존 순서대로 실행 (순환 의존 감지 시 중단)
-
-Step 4: 실행 플랜 표시 → 즉시 실행 (사용자 확인 불필요)
-
-Step 5: 실행
-    ├── 코딩 작업 → 引き継ぎ情報 블록에 推定 MODE 포함 → devops-pipeline
-    ├── Figma 작업 → figma-to-code
-    ├── 프로젝트 초기화 → project-onboarding
-    └── 비코딩 작업 → 스킬만 실행
-```
-
-**MODE 推定 (skill-router가 인계 시 포함):**
-
-| 시그널 | 추정 MODE |
-|--------|---------|
-| "새로", "처음", "create", "implement" | NEW |
-| "추가", "확장", "add", "extend" | FEATURE |
-| "버그", "고쳐", "fix", "error" | BUGFIX |
-| "주석", "설정", "typo", "rename" | PATCH |
-
----
-
-## 3. 개발 파이프라인 — devops-pipeline
-
-**skill-router에서 인계받거나, 사용자가 명시적으로 파이프라인을 언급할 때만 직접 실행.**
+**모든 개발 요청의 실행 엔진. CLAUDE.md가 자동으로 위임합니다.**
 
 ### MODE 감지 (우선순위 순)
 
 ```
-① skill-router 引き継ぎ情報 블록이 있으면 → 재분석 없이 바로 STEP_PLAN
-② 사용자가 "mode: new/feature/bugfix/patch" 명시 → 그대로 사용
-③ 위 둘 다 없을 때 → 키워드 자동 감지
+① 사용자가 "mode: new/feature/bugfix/patch" 명시 → 그대로 사용
+② 위 없을 때 → 키워드 자동 감지
+   "새로", "처음", "create", "implement" → NEW
+   "추가", "확장", "add", "extend"       → FEATURE
+   "버그", "고쳐", "fix", "error"        → BUGFIX
+   "주석", "설정", "typo", "rename"      → PATCH
 ```
 
 ### 모드별 실행 스텝
@@ -176,7 +186,7 @@ FIGMA_PREFLIGHT (Figma URL 있을 때만)
 STEP_SAFETY     → 시크릿/취약점/인젝션 스캔 (CRITICAL만 즉시 수정)
 STEP_CODE_REVIEW → 로직 정확성/엣지케이스/메모리 누수/N+1
 STEP_ARCH (NEW만)
-  → project-context/structure.md의 ## Main Module 확인 (없으면 사용자에게 1번 질문 → 추가)
+  → project-context/structure.md의 ## Main Module 확인
   → 폴더 구조/파일 책임/명명/중복/try-catch/로그 레벨 검사
 STEP_JAPANESE   → 영어 주석 → 일본어 변환
 STEP_FRONTEND   → Figma: figma-code-sync + responsive-validator / 스크린샷: frontend-review
@@ -187,9 +197,42 @@ STEP_COMMIT     → 반드시 사용자 확인 후 커밋 (feature/{번호}/{이
 
 ---
 
-## 4. Figma → 코드 변환 — figma-to-code
+## 5. Agent Teams 패턴
 
-**언제:** skill-router가 Figma 시그널 감지 시 라우팅, 또는 devops-pipeline FIGMA_PREFLIGHT가 위임
+스킬들은 **팀** 단위로 그룹화되어 조율 실행됩니다. 팀 멤버십은 각 `plugin.json`에 선언됩니다.
+
+### 4가지 팀
+
+| 팀 | 실행 방식 | 용도 |
+|----|---------|------|
+| `review-team` | **Parallel** (병렬) | 코드 품질 다각도 검토 |
+| `quality-team` | **Sequential** (순차) | 테스트/일본어/버전 체크 |
+| `commit-team` | **Sequential** (순차) | 커밋 처리 |
+| `feature-team` | **Gated** (게이트) | 기능 개발 전 요건/설계 확인 |
+
+### plugin.json 선언 방식
+
+```json
+{
+  "name": "devops",
+  "teams": {
+    "review-team":  ["devops-code-review", "devops-arch-review", "devops-safety-check"],
+    "quality-team": ["devops-test-gen", "devops-japanese-comments", "devops-version-check"],
+    "commit-team":  ["devops-git-commit"],
+    "feature-team": ["devops-requirements", "devops-frontend-review"]
+  }
+}
+```
+
+**`make lint`** 가 잘못된 팀명이나 존재하지 않는 스킬 참조를 자동 검출합니다.
+
+**`make sync`** 가 plugin.json의 teams: 정보를 읽어 README.md 의 Agent Teams 테이블을 자동 업데이트합니다.
+
+---
+
+## 6. Figma → 코드 변환 — figma-to-code
+
+**언제:** devops-pipeline의 FIGMA_PREFLIGHT가 위임, 또는 Figma URL이 포함된 요청
 
 ```
 Phase 1: 프레임워크 확인 (React/Vue/PrimeFaces/Next.js 등)
@@ -219,7 +262,7 @@ Phase 5: devops-pipeline 연동
 
 ---
 
-## 5. 스킬 품질 관리 — devops-skill-eval
+## 7. 스킬 품질 관리 — devops-skill-eval
 
 **언제:** 새 스킬 만들거나 수정한 후 배포 전 검증
 
@@ -234,55 +277,59 @@ Phase 5: devops-pipeline 연동
 
 ---
 
-## 6. 자동화 유틸리티
+## 8. 자동화 유틸리티
+
+모든 명령은 **`make`** 로 실행합니다:
 
 ```bash
-python3 scripts/sync-registry.py
-# skills/*/SKILL.md + agents/*.md 전체 스캔
-# registry.md 테이블 + README.md 통계 자동 갱신
-# install.sh 실행 시 자동으로 함께 실행됨
+make install      # symlink skills/agents to ~/.claude/
+make lint         # 스킬/에이전트 품질 검사 (frontmatter, teams, dep chains)
+make lint-strict  # 경고도 에러로 처리
+make sync         # registry.md + README.md (Skills + Teams 테이블) 자동 갱신
+make graph        # 전체 의존성 트리 출력
+make check        # 의존성 문제만 요약
+make validate     # lint + sync + check 일괄 실행 (커밋 전 반드시)
 ```
 
-```bash
-./install.sh
-# 스킬/에이전트 심링크를 ~/.claude/skills/, ~/.claude/agents/ 에 생성
-# 고아 심링크 자동 정리: skills/ 에서 삭제된 스킬의 심링크를 ~/.claude/skills/ 에서도 제거
-# install.sh를 다시 실행하면 고아 심링크 제거 + 최신 목록으로 동기화
+### sync-registry.py 가 자동 업데이트하는 항목
+
+```
+registry.md
+  └── ## Registry Table       ← 전체 스킬/에이전트 목록 테이블
+
+README.md
+  ├── ## Current Skills & Agents ← 플러그인별 스킬/에이전트 테이블
+  └── ## Agent Teams             ← plugin.json teams: 집약 테이블
+      (<!-- TEAMS_TABLE_START/END --> 마커 사이 자동 교체)
 ```
 
-```bash
-python3 scripts/lint-skills.py
-# 스킬/에이전트 품질 자동 검사 (install.sh 실행 시 자동 포함)
-# 검사 항목:
-#   ✗ ERROR  — frontmatter 누락 (name/description), 존재하지 않는 requires 참조, 순환 참조
-#   ⚠ WARN   — 스텝 정의 누락, deprecated 스킬, 삭제된 파일 경로 참조, 의존 체인 깊이 3↑
-# --strict 옵션: 경고도 에러로 처리 → CI/CD 환경에서 merge 블로킹 가능
+### lint-skills.py 검사 항목
+
+```
+✗ ERROR  — frontmatter 누락 (name/description), 존재하지 않는 requires 참조,
+           순환 참조, 잘못된 팀명, 미존재 스킬의 팀 등록
+⚠ WARN   — 스텝 정의 누락, deprecated 스킬 의존, 깊은 dep 체인 (3단계↑)
+           tags 미설정, description/use-when 미설정
 ```
 
+### dep-graph.py 사용법
+
 ```bash
-python3 scripts/dep-graph.py
-# 전체 의존성 트리 출력 (requires: 관계 시각화)
-
-python3 scripts/dep-graph.py --reverse <skill-name>
-# 역방향 조회: 이 스킬을 삭제/변경하면 어떤 스킬이 영향받는지
-
-python3 scripts/dep-graph.py --check
-# 문제 있는 의존 관계만 요약 출력 (존재하지 않는 참조, deprecated 의존, 깊은 체인)
+python3 scripts/dep-graph.py              # 전체 의존성 트리
+python3 scripts/dep-graph.py --reverse <skill>  # 이 스킬 삭제 시 영향 범위
+python3 scripts/dep-graph.py --check            # 문제 있는 의존 관계만 요약
 ```
 
 ---
 
-## 7. 전체 흐름 예시 — "유저 인증 API 새로 만들어줘"
+## 9. 전체 흐름 예시 — "유저 인증 API 새로 만들어줘"
 
 ```
-① skill-router
-   Step 0: model-strategy.md 읽기 → sonnet (코드 생성)
-   Phase 1: "API / auth / 새로" → tags 추출 [code, requirements, feature, planning]
-           → registry.md tags 교집합: devops-requirements(3개), devops-arch-review(1개) 후보
-   Phase 2: devops-requirements SKILL.md 정밀 매칭 (score 11)
-   引き継ぎ情報: MODE = NEW, Figma = なし
+① CLAUDE.md 라우팅
+   → 개발 요청 감지 → devops-pipeline 자동 위임
+   → MODE 감지: "새로" → NEW
 
-② devops-pipeline (引き継ぎ情報 수신 → STEP_PLAN으로 바로 이동)
+② devops-pipeline (feature-team 게이트 진입)
    STEP_REQUIREMENTS
      → project-context/structure.md 읽기 (기존 파일 스코프 확인)
      → project-context/instruction.md 읽기 (명명 패턴 확인)
@@ -290,14 +337,17 @@ python3 scripts/dep-graph.py --check
 
    Development → JWT 인증 코드 작성
 
-   STEP_SAFETY → JWT 시크릿 하드코딩 없음 ✅
+③ review-team (병렬 실행)
+   STEP_SAFETY     → JWT 시크릿 하드코딩 없음 ✅
    STEP_CODE_REVIEW → 토큰 만료 처리 누락 발견 → 수정
-   STEP_ARCH (NEW)
-     → project-context/structure.md의 ## Main Module 확인
-     → 아키텍처 검토 3건 수정
+   STEP_ARCH (NEW)  → 아키텍처 검토 3건 수정
+
+④ quality-team (순차 실행)
    STEP_JAPANESE → 영어 주석 12개 → 일본어 변환
-   STEP_VERSION → 문제 없음 ✅
-   STEP_TESTS → 로그인 성공/토큰 만료/잘못된 비번 → 8개 생성
+   STEP_VERSION  → 문제 없음 ✅
+   STEP_TESTS    → 로그인 성공/토큰 만료/잘못된 비번 → 8개 생성
+
+⑤ commit-team (순차 실행)
    STEP_COMMIT
      → 브랜치: feature/AUTH-001/user-auth
      → 사용자에게 커밋 내용 보여줌 → 확인 후 커밋
@@ -305,31 +355,47 @@ python3 scripts/dep-graph.py --check
 
 ---
 
-## 8. 파일 구조
+## 10. 파일 구조
 
 ```
 skill-agent-factory/
-├── agents/
-│   ├── skill-router.md         ← PRIMARY ENTRY POINT
-│   ├── devops-pipeline.md      ← 개발 파이프라인
-│   ├── figma-to-code.md        ← Figma → 코드
-│   └── project-onboarding.md  ← 프로젝트 초기화 (최초 1회)
-├── skills/
-│   ├── devops-*/               ← devops 스킬 10개
-│   └── figma-*/                ← figma 스킬 5개
-├── standards/
-│   └── CODING-STANDARDS.md    ← 글로벌 코딩 규칙 (Rules 1~10)
-├── project-context/            ← 프로젝트별 컨텍스트 (온보딩 후 생성)
-│   ├── structure.md            ← 폴더 구조 + 기존 파일 목록 + Main Module
-│   └── instruction.md         ← 발견된 코드 패턴 (관찰, 규칙 아님)
-├── _docs/
-│   ├── model-strategy.md       ← 태스크 타입별 최적 모델 정의
-│   └── how-it-works.md        ← 이 파일
+├── CLAUDE.md              ← Master instructions + 라우팅 규칙
+├── README.md              ← 자동 업데이트 (make sync)
+├── Makefile               ← Dev commands
+├── registry.md            ← 자동 업데이트 (make sync)
+├── install.sh             ← 심링크 생성 + 고아 심링크 정리
+├── plugins/               ← 모든 스킬 & 에이전트
+│   ├── devops/
+│   │   ├── plugin.json        ← 팀 멤버십 선언
+│   │   ├── agents/devops-pipeline.md
+│   │   └── skills/{name}/
+│   │       ├── metadata.md    ← Tier 1 (항상 로드)
+│   │       ├── SKILL.md       ← Tier 2 (선택 시 로드)
+│   │       └── resources/     ← Tier 3 (요청 시 로드)
+│   ├── figma/
+│   │   ├── plugin.json
+│   │   ├── agents/figma-to-code.md
+│   │   └── skills/{name}/
+│   └── project/
+│       ├── plugin.json
+│       └── agents/project-onboarding.md
 ├── scripts/
-│   └── sync-registry.py       ← 레지스트리 자동 동기화
-└── registry.md                 ← 전체 스킬/에이전트 목록 (19개)
+│   ├── sync-registry.py   ← registry.md + README.md 자동 갱신
+│   ├── lint-skills.py     ← 품질 검사 (frontmatter, teams, deps)
+│   └── dep-graph.py       ← 의존성 트리 + 역방향 조회
+├── standards/
+│   └── CODING-STANDARDS.md
+└── _docs/
+    ├── how-it-works.md    ← 이 파일
+    ├── skills.md
+    ├── sub-agents.md
+    ├── hooks.md
+    ├── plugins.md
+    ├── mcp.md
+    ├── output-styles.md
+    └── agent-teams.md
 ```
 
 ---
 
-*Last updated: 2026-02-23 (①~⑧, A~F 수정 반영)*
+*Last updated: 2026-02-23 — plugins/ 구조, 3-tier, Agent Teams, Makefile, 자동화 반영*

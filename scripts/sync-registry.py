@@ -6,6 +6,7 @@
 # Phase B: plugin 単位スキャンに対応
 """
 
+import json
 import re
 from datetime import date
 from pathlib import Path
@@ -306,6 +307,60 @@ def update_readme(assets: list[dict]):
 
 
 # ============================================================
+# README Agent Teams セクション自動更新
+# ============================================================
+TEAM_EXECUTION = {
+    "review-team":  "**Parallel**",
+    "quality-team": "**Sequential**",
+    "commit-team":  "**Sequential**",
+    "feature-team": "**Gated**",
+}
+
+
+def build_teams_table() -> str:
+    """全 plugin.json の teams: を集約して Markdown テーブルを生成"""
+    # チームごとにメンバーを集約
+    team_members: dict[str, list[str]] = {}
+    if PLUGINS_DIR.exists():
+        for plugin_dir in sorted(PLUGINS_DIR.iterdir()):
+            if not plugin_dir.is_dir():
+                continue
+            pjson = plugin_dir / "plugin.json"
+            if not pjson.exists():
+                continue
+            try:
+                data = json.loads(pjson.read_text(encoding="utf-8"))
+            except json.JSONDecodeError:
+                continue
+            for team_name, members in data.get("teams", {}).items():
+                team_members.setdefault(team_name, []).extend(members)
+
+    if not team_members:
+        return "| Team | Execution | Members |\n|------|-----------|---------|"
+
+    header = "| Team | Execution | Members |\n|------|-----------|---------|"
+    rows = []
+    for team in sorted(team_members.keys()):
+        members = team_members[team]
+        exec_style = TEAM_EXECUTION.get(team, "—")
+        members_str = ", ".join(members) if members else "—"
+        rows.append(f"| `{team}` | {exec_style} | {members_str} |")
+
+    return header + "\n" + "\n".join(rows)
+
+
+def update_readme_teams(text: str) -> str:
+    """README の TEAMS_TABLE_START ~ END ブロックを更新"""
+    table = build_teams_table()
+    return re.sub(
+        r"(<!-- TEAMS_TABLE_START -->).*?(<!-- TEAMS_TABLE_END -->)",
+        rf"\1\n{table}\n\2",
+        text,
+        flags=re.DOTALL,
+    )
+
+
+# ============================================================
 # エントリポイント
 # ============================================================
 def main():
@@ -324,6 +379,12 @@ def main():
 
     update_registry(all_assets)
     update_readme(all_assets)
+
+    # Agent Teams テーブル更新
+    readme_text = README_MD.read_text(encoding="utf-8")
+    readme_text = update_readme_teams(readme_text)
+    README_MD.write_text(readme_text, encoding="utf-8")
+    print("✅ README.md Teams テーブル更新完了")
 
     print("\n✨ 同期完了!")
 
