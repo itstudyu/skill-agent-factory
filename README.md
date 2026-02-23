@@ -1,8 +1,8 @@
 # Skill & Agent Factory
 
-A centralized workspace for creating, managing, and using **Claude Code skills and agents**, organized by development category.
+A centralized workspace for creating, managing, and using **Claude Code skills and agents**, organized as plugin bundles.
 
-When you give Claude Code a task, it automatically selects the right skill or agent from this factory based on what you're asking — and runs every development request through a **mandatory quality pipeline**.
+When you give Claude Code a task, it automatically selects the right skill or agent based on what you're asking — and runs every development request through a **mandatory quality pipeline**.
 
 ---
 
@@ -10,33 +10,65 @@ When you give Claude Code a task, it automatically selects the right skill or ag
 
 ```
 skill-agent-factory/
-├── CLAUDE.md            ← Master instructions (auto-read by Claude Code)
-├── README.md            ← This file
-├── registry.md          ← Master registry of ALL assets (auto-updated by scripts)
-├── install.sh           ← Global installer: symlinks + orphan cleanup + lint + hooks
-├── skills/              ← ALL skills (flat, category-prefixed names)
-│   └── {category}-{name}/SKILL.md
-├── agents/              ← ALL agents
-│   └── {agent-name}.md
-├── scripts/             ← Automation utilities (run via install.sh or manually)
-│   ├── sync-registry.py ← Auto-syncs registry.md + README.md from SKILL.md files
-│   ├── lint-skills.py   ← Quality checker: frontmatter, requires refs, dep chains
-│   └── dep-graph.py     ← Dependency tree visualizer + reverse lookup
-├── standards/           ← Global coding rules (detailed examples)
+├── CLAUDE.md              ← Master instructions (auto-read by Claude Code)
+├── README.md              ← This file
+├── Makefile               ← Dev commands: make install / lint / validate / graph
+├── registry.md            ← Master registry of ALL assets (auto-updated)
+├── install.sh             ← Global installer: symlinks + orphan cleanup + lint
+├── plugins/               ← ALL skills & agents live here (plugin-grouped)
+│   ├── devops/            ← DevOps plugin (10 skills + devops-pipeline agent)
+│   │   ├── plugin.json    ← Plugin manifest + team membership declarations
+│   │   ├── agents/devops-pipeline.md
+│   │   └── skills/{skill-name}/
+│   │       ├── metadata.md    ← Tier 1: routing (tags, use-when, model) — always loaded
+│   │       ├── SKILL.md       ← Tier 2: full instructions — loaded only when selected
+│   │       └── resources/     ← Tier 3: checklists, templates — loaded on-demand
+│   ├── figma/             ← Figma plugin (5 skills + figma-to-code agent)
+│   │   ├── plugin.json
+│   │   ├── agents/figma-to-code.md
+│   │   └── skills/{skill-name}/
+│   └── project/           ← Project plugin (project-onboarding agent)
+│       ├── plugin.json
+│       └── agents/project-onboarding.md
+├── scripts/               ← Automation utilities (also available via Makefile)
+│   ├── sync-registry.py   ← Auto-syncs registry.md + README.md from metadata.md
+│   ├── lint-skills.py     ← Quality checker: frontmatter, refs, teams, dep chains
+│   └── dep-graph.py       ← Dependency tree visualizer + reverse lookup
+├── standards/             ← Global coding rules
 │   └── CODING-STANDARDS.md
-├── categories/          ← Category context docs (reference only — skills live in skills/)
-│   ├── backend/CLAUDE.md
-│   ├── frontend/CLAUDE.md
-│   ├── database/CLAUDE.md
-│   ├── api-reference/CLAUDE.md
-│   ├── devops/CLAUDE.md
-│   └── figma/CLAUDE.md
-└── _docs/               ← Official Claude Code reference docs
+└── _docs/                 ← Official Claude Code reference docs
 ```
 
-**Skill naming convention:** `{category}-{skill-name}`
-- `devops-code-review` → invoked as `/skill-agent-factory:devops-code-review`
-- `backend-api-gen` → invoked as `/skill-agent-factory:backend-api-gen`
+---
+
+## 3-Tier Skill Architecture
+
+Each skill uses progressive disclosure to minimize context load:
+
+| Tier | File | When Loaded |
+|------|------|-------------|
+| **Tier 1** | `metadata.md` | **Always** — lightweight routing (~10 lines) |
+| **Tier 2** | `SKILL.md` | Only when the skill is selected |
+| **Tier 3** | `resources/` | On-demand — checklists, templates, examples |
+
+This means Claude only reads what it needs, keeping context lean.
+
+---
+
+## Agent Teams
+
+Skills across plugins are grouped into **teams** for coordinated execution. Team membership is declared in each `plugin.json` and validated by `make lint`.
+
+| Team | Execution | Skills |
+|------|-----------|--------|
+| `review-team` | **Parallel** | code-review + arch-review + safety-check + responsive-validator |
+| `quality-team` | **Sequential** | test-gen + japanese-comments + version-check |
+| `commit-team` | **Sequential** | git-commit |
+| `feature-team` | **Gated** | requirements → design-analyzer → implementation |
+
+When a new plugin is added, declare its team membership in `plugin.json` before creating skill files. `make lint` will catch invalid team names or broken references automatically.
+
+> **Planned:** `plugins/teams/agents/` orchestrators (implement when ≥ 3 plugins registered per team)
 
 ---
 
@@ -45,8 +77,9 @@ skill-agent-factory/
 Every development request automatically runs through this pipeline:
 
 ```
+[0] Project Context Check    ← Verifies project-context/ exists (runs project-onboarding if not)
 [1] Requirements Gathering   ← Hard gate — reads project-context/, asks if unclear
-         ↓  (Figma URL provided? → figma-to-code agent handles full Figma workflow)
+         ↓  (Figma URL? → figma-to-code agent handles full Figma workflow)
          ↓  (write code)
 [2] Security Scan            ← Secrets, injection patterns (lightweight)
 [3] Code Quality Review      ← Logic, memory, N+1 queries, coding standards
@@ -58,7 +91,7 @@ Every development request automatically runs through this pipeline:
 [8] Git Commit               ← Shows summary, waits for user approval, then commits
 ```
 
-Orchestrated by `agents/devops-pipeline.md`.
+Orchestrated by `plugins/devops/agents/devops-pipeline.md`.
 
 ---
 
@@ -71,28 +104,33 @@ Applied to every file, regardless of language or category. Full details in `stan
 | **File header** | First line of every source file: one-line Japanese summary comment |
 | **Function max 30 lines** | Split if exceeded; comment if unavoidable exception |
 | **One file, one responsibility** | No unrelated logic in the same file |
-| **Commit confirmation** | Always shows branch/files/message — waits for user approval before committing |
+| **Commit confirmation** | Always shows branch/files/message — waits for user approval |
 | **Comments in Japanese** | All code comments and log messages in Japanese |
 | **Commit messages in Japanese** | 1–4 lines, key content only |
 | **Branch naming** | `feature/{TaskNumber}/{Name}` — never commits to master without explicit instruction |
 
 ---
 
-## Installation
+## Quick Start (Makefile)
 
-Choose the method that fits your use case:
-
-| Method | Scope | Use When |
-|--------|-------|----------|
-| **Method 1** — Global Symlink | User-level (all projects, all sessions) | You want skills available everywhere on this machine |
-| **Method 2** — Git Submodule | Per-project (bundled in repo) | You want skills tied to a specific project and shared with team |
-| **Method 3** — Plugin Dir | Per-session or per-project | You want to load the factory without embedding it |
+```bash
+make install      # symlink skills/agents to ~/.claude/
+make lint         # check skill/agent quality
+make lint-strict  # warnings also count as errors
+make sync         # update registry.md and README.md
+make graph        # show full dependency tree
+make check        # check dependency issues only
+make validate     # lint + sync + check (run before committing)
+make help         # show all commands
+```
 
 ---
 
-### Method 1 — Global Symlink → User-Level Skills on Any Computer
+## Installation
 
-Run once after cloning. Makes all skills/agents available in **every** Claude Code project automatically — no flags needed.
+### Method 1 — Global Symlink (recommended)
+
+Run once after cloning. Makes all skills/agents available in every Claude Code project.
 
 ```bash
 git clone https://github.com/ysjapan97/skill-agent-factory ~/skill-agent-factory
@@ -101,21 +139,9 @@ chmod +x install.sh
 ./install.sh
 ```
 
-**What it does:**
-1. Symlinks `~/.claude/skills/` → this repo's `skills/` (available in all projects)
-2. Symlinks `~/.claude/agents/` → this repo's `agents/` (available in all projects)
-3. Adds `SessionStart` hooks to `~/.claude/settings.json` — Claude **automatically re-reads** the DevOps pipeline rules at every session start, after context compaction, and on session resume. No more forgetting instructions.
-
-**To use on a new computer:**
-```bash
-git clone https://github.com/ysjapan97/skill-agent-factory ~/skill-agent-factory
-cd ~/skill-agent-factory && ./install.sh
-```
-
 **To update after adding new skills:**
 ```bash
-git pull
-./install.sh   # links any newly added skills
+git pull && ./install.sh
 ```
 
 **To uninstall:**
@@ -125,57 +151,31 @@ git pull
 
 ---
 
-### Method 2 — Git Submodule → Per-Project, Bundled in Repo
+### Method 2 — Git Submodule (per-project)
 
-Use this when you want to embed the factory directly inside a project. The factory travels with your repo.
+Embed the factory inside a project so it travels with the repo.
 
 ```bash
 cd my-project
 git submodule add https://github.com/ysjapan97/skill-agent-factory
-git submodule update --init --recursive
 ```
 
-Add to your project's `.claude/settings.json`:
+Add to `.claude/settings.json`:
 ```json
-{
-  "pluginDirs": ["./skill-agent-factory"]
-}
+{ "pluginDirs": ["./skill-agent-factory"] }
 ```
 
-**To update the submodule:**
-```bash
-cd skill-agent-factory && git pull origin main
-cd .. && git add skill-agent-factory && git commit -m "chore: update skill-agent-factory"
-```
-
-**When a teammate clones your project:**
+**When a teammate clones:**
 ```bash
 git clone --recurse-submodules https://github.com/you/my-project
-# skills are automatically available — no extra setup needed
 ```
-
-> Skills are namespaced when loaded as a plugin:
-> `/skill-agent-factory:devops-code-review`
 
 ---
 
-### Method 3 — Claude Code Plugin (`--plugin-dir`)
+### Method 3 — Plugin Dir (per-session)
 
-**Per session:**
 ```bash
 claude --plugin-dir ~/path/to/skill-agent-factory
-```
-
-**Per project** — add to your project's `.claude/settings.json`:
-```json
-{
-  "pluginDirs": ["~/path/to/skill-agent-factory"]
-}
-```
-
-**Global via shell alias:**
-```bash
-alias claude='claude --plugin-dir ~/skill-agent-factory'
 ```
 
 ---
@@ -216,80 +216,114 @@ alias claude='claude --plugin-dir ~/skill-agent-factory'
 | `project-onboarding` | project | sonnet | Project onboarding agent. Auto-detects existing vs new projects, analyzes code p |
 
 
-## Automation Scripts
-
-| Script | When to Run | What It Does |
-|--------|------------|--------------|
-| `python3 scripts/sync-registry.py` | Auto (via install.sh) | Scans all SKILL.md + agents/*.md and updates registry.md + README.md |
-| `python3 scripts/lint-skills.py` | Auto (via install.sh) | Checks frontmatter, requires refs, step structure, dep chain depth |
-| `python3 scripts/lint-skills.py --strict` | CI / pre-merge | Same as above but warnings also count as errors |
-| `python3 scripts/dep-graph.py` | On demand | Prints full dependency tree for all skills |
-| `python3 scripts/dep-graph.py --reverse <skill>` | Before deleting a skill | Shows which skills depend on the target skill |
-| `python3 scripts/dep-graph.py --check` | On demand | Prints only dependency issues (missing refs, deep chains) |
-
----
-
-## Adding New Skills
+## Adding a New Skill
 
 ### 1. Create the skill directory
 ```bash
-mkdir -p skills/backend-my-skill
+mkdir -p plugins/{plugin}/skills/{category}-{skill-name}
 ```
 
-### 2. Write SKILL.md
+### 2. Write `metadata.md` (Tier 1 — routing)
 ```yaml
-# skills/backend-my-skill/SKILL.md
 ---
 name: backend-my-skill
-description: What this skill does. Use when the user asks to... [clear trigger keywords]
+category: backend
 tags: [backend, generate, code, api]
+model: sonnet
+allowed-tools: Read, Write, Bash
+version: v1.0
+use-when: >
+  User wants to... Triggers: "키워드", "keyword", "キーワード"
+---
+```
+
+### 3. Write `SKILL.md` (Tier 2 — instructions)
+```yaml
+---
+name: backend-my-skill
+version: v1.0
+description: What this skill does.
+tags: [backend, generate, code, api]
+allowed-tools: Read, Write, Bash
 ---
 
 # Backend My Skill
 
-Step-by-step instructions for Claude to follow...
+## STEP_1 — ...
 ```
 
-`tags:` 는 skill-router의 Phase 1 필터링에 사용됩니다. 스킬의 도메인(devops, figma 등)과 액션(review, generate, validate 등)을 포함하세요.
+### 4. (Optional) Add `resources/` (Tier 3 — on-demand)
+```
+plugins/{plugin}/skills/{skill-name}/resources/
+├── checklist.md
+└── template.md
+```
 
-### 3. Re-run installer
+### 5. Declare team membership in `plugin.json`
+```json
+"teams": {
+  "review-team": ["backend-my-skill"]
+}
+```
+
+### 6. Validate and sync
 ```bash
-./install.sh
-# 심링크 생성 + registry.md / README.md 자동 갱신 + lint 체크
+make validate   # lint + sync + dep-check
+./install.sh    # re-link to ~/.claude/
 ```
 
-registry.md와 README.md는 `sync-registry.py`가 자동으로 업데이트합니다. 수동 편집 불필요.
-
 ---
 
-## Adding New Agents
+## Adding a New Plugin
 
-```markdown
-<!-- agents/my-agent.md -->
----
-name: my-agent
-description: When Claude should delegate to this agent. Use proactively when...
-tools: Read, Grep, Glob, Bash
-model: sonnet
----
-
-You are a specialized agent for...
+```bash
+mkdir -p plugins/{name}/{skills,agents}
 ```
 
-Then re-run `./install.sh` — registry.md and README are updated automatically.
+Create `plugins/{name}/plugin.json`:
+```json
+{
+  "name": "{name}",
+  "description": "...",
+  "version": "1.0.0",
+  "skills": [],
+  "agents": [],
+  "teams": {
+    "review-team": [],
+    "feature-team": []
+  }
+}
+```
+
+Then add skills following the steps above.
 
 ---
 
-## Categories
+## Automation Scripts
 
-| Category | Description |
-|----------|-------------|
-| `backend` | Server APIs, business logic, auth, background jobs, testing |
-| `frontend` | UI components, state management, styling, accessibility |
-| `database` | Schema design, migrations, query optimization, ORM |
-| `api-reference` | OpenAPI specs, API docs, SDK generation, webhooks |
-| `devops` | CI/CD, Docker, Kubernetes, IaC, monitoring, pipeline |
-| `figma` | Figma → Code workflow: token extraction, mapping, sync verification |
+| Command | What It Does |
+|---------|-------------|
+| `make validate` | lint + sync + dep-check (run before every commit) |
+| `make lint` | Frontmatter, teams refs, dep chains, step structure |
+| `make lint-strict` | Same but warnings = errors |
+| `make sync` | Updates registry.md + README.md from metadata.md files |
+| `make graph` | Full dependency tree |
+| `make check` | Dependency issues only |
+| `python3 scripts/dep-graph.py --reverse <skill>` | What breaks if this skill is deleted |
+
+---
+
+## Versioning
+
+All assets use `version: vMAJOR.MINOR` in their frontmatter.
+
+| Change | Bump |
+|--------|------|
+| Breaking (rename, remove steps, change output format) | MAJOR (v1.0 → v2.0) |
+| Non-breaking (new steps, improved instructions, new tags) | MINOR (v1.0 → v1.1) |
+| Spelling / formatting only | none |
+
+Run `make sync` after bumping — registry.md auto-reflects the new version.
 
 ---
 
@@ -304,7 +338,7 @@ Then re-run `./install.sh` — registry.md and README are updated automatically.
 | `_docs/plugins.md` | Plugin structure, manifest, distribution |
 | `_docs/mcp.md` | MCP server setup, scopes, authentication |
 | `_docs/output-styles.md` | Custom output style format |
-| `_docs/agent-teams.md` | Multi-agent coordination (experimental) |
+| `_docs/agent-teams.md` | Multi-agent coordination |
 
 ---
 
@@ -312,7 +346,8 @@ Then re-run `./install.sh` — registry.md and README are updated automatically.
 
 - [Claude Code](https://claude.ai/code) v1.0.33 or later
 - macOS / Linux (install.sh uses bash + symlinks)
-- Python 3 (used by install.sh for settings.json merging)
+- Python 3 (scripts/\*.py)
+- GNU Make (Makefile)
 
 ---
 

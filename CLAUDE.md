@@ -435,4 +435,4 @@ SKILL.md:     version: v2.0
 ---
 
 *Last updated: 2026-02-23*
-*Project: Skill & Agent Factory v2.0 (Phase B+C: plugin structure + native routing)*
+*Project: Skill & Agent Factory v2.1 (3-tier skills + Agent Teams + Makefile)*
