@@ -99,12 +99,22 @@ skill-agent-factory/
 ├── README.md              ← GitHub documentation
 ├── registry.md            ← Master registry of ALL assets
 ├── install.sh             ← Global installer (symlinks to ~/.claude/)
-├── skills/                ← ALL skills live here (flat, category-prefixed names)
-│   └── {category}-{name}/
-│       ├── metadata.md    ← Phase A: lightweight routing file (tags, use-when, model)
-│       └── SKILL.md       ← Full instructions (loaded only when skill is selected)
-├── agents/                ← ALL agents live here (flat)
-│   └── {agent-name}.md
+├── plugins/               ← ALL skills & agents live here (plugin-grouped)
+│   ├── devops/            ← DevOps plugin (10 skills + devops-pipeline agent)
+│   │   ├── plugin.json
+│   │   ├── agents/devops-pipeline.md
+│   │   └── skills/{skill-name}/
+│   │       ├── metadata.md  ← lightweight routing (tags, use-when, model) — always loaded
+│   │       └── SKILL.md     ← full instructions — loaded only when selected
+│   ├── figma/             ← Figma plugin (5 skills + figma-to-code agent)
+│   │   ├── plugin.json
+│   │   ├── agents/figma-to-code.md
+│   │   └── skills/{skill-name}/
+│   └── project/           ← Project plugin (project-onboarding agent)
+│       ├── plugin.json
+│       └── agents/project-onboarding.md
+├── skills/                ← Legacy (devops-pr-description only)
+├── agents/                ← Legacy (skill-router deprecated)
 ├── .claude-plugin/
 │   └── plugin.json        ← Claude Code plugin manifest
 ├── standards/             ← Coding standards (detailed rules + examples)
@@ -195,7 +205,7 @@ Always read the relevant doc in `_docs/` before writing:
 
 **Skills** require TWO files:
 
-`skills/{category}-{skill-name}/metadata.md` — lightweight routing file (always loaded)
+`plugins/{plugin}/skills/{category}-{skill-name}/metadata.md` — lightweight routing file (always loaded)
 ```yaml
 ---
 name: backend-code-review
@@ -208,7 +218,7 @@ use-when: >
 ---
 ```
 
-`skills/{category}-{skill-name}/SKILL.md` — full instructions (loaded only when selected)
+`plugins/{plugin}/skills/{category}-{skill-name}/SKILL.md` — full instructions (loaded only when selected)
 ```yaml
 ---
 name: backend-code-review
@@ -228,7 +238,7 @@ description: Reviews backend code for quality, security, and best practices.
 | `model` | `haiku` (빠른 단순 작업) / `sonnet` (복잡한 분석) |
 | `use-when` | 트리거 키워드 포함 자연어 설명 (한국어 + 영어 + 일본어) |
 
-**Agents** go in: `agents/{agent-name}.md`
+**Agents** go in: `plugins/{plugin}/agents/{agent-name}.md`
 ```yaml
 ---
 name: code-reviewer
@@ -312,4 +322,4 @@ After creating new skills or agents, remind the user:
 ---
 
 *Last updated: 2026-02-23*
-*Project: Skill & Agent Factory v1.3 (Phase A: metadata.md routing)*
+*Project: Skill & Agent Factory v2.0 (Phase B+C: plugin structure + native routing)*

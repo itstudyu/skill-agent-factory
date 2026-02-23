@@ -1,0 +1,18 @@
+{
+  "name": "devops",
+  "description": "DevOps pipeline skills: code review, security, testing, git, Japanese comments",
+  "version": "1.0.0",
+  "skills": [
+    "devops-arch-review",
+    "devops-code-review",
+    "devops-frontend-review",
+    "devops-git-commit",
+    "devops-japanese-comments",
+    "devops-requirements",
+    "devops-safety-check",
+    "devops-skill-eval",
+    "devops-test-gen",
+    "devops-version-check"
+  ],
+  "agents": ["devops-pipeline"]
+}

@@ -136,36 +136,36 @@ skill_count=0
 agent_count=0
 skip_count=0
 
-# ── Cleanup orphaned skill symlinks ──────────
-echo -e "${BLUE}Cleaning up orphaned skill symlinks...${NC}"
+# ── Cleanup orphaned symlinks ─────────────────
+echo -e "${BLUE}Cleaning up orphaned symlinks...${NC}"
 
 removed_orphans=0
-if [ -d "$CLAUDE_SKILLS_DIR" ]; then
-  for link in "$CLAUDE_SKILLS_DIR"/*/; do
-    link="${link%/}"
-    [ -L "$link" ] || continue
-    target_path="$(readlink "$link")"
-    # Only touch symlinks that point INTO this factory's skills/ dir
-    if [[ "$target_path" == "$FACTORY_DIR/skills/"* ]] && [ ! -e "$link" ]; then
-      rm "$link"
-      echo -e "  ${RED}✗${NC}  Removed orphaned symlink: $(basename "$link")"
-      ((removed_orphans++)) || true
-    fi
-  done
-fi
+for link in "$CLAUDE_SKILLS_DIR"/*/ "$CLAUDE_AGENTS_DIR"/*.md; do
+  link="${link%/}"
+  [ -L "$link" ] || continue
+  target_path="$(readlink "$link")"
+  # Remove dangling symlinks that point into this factory's plugins/
+  if [[ "$target_path" == "$FACTORY_DIR/plugins/"* ]] && [ ! -e "$link" ]; then
+    rm "$link"
+    echo -e "  ${RED}✗${NC}  Removed orphaned symlink: $(basename "$link")"
+    ((removed_orphans++)) || true
+  fi
+done
 if [ "$removed_orphans" -eq 0 ]; then
   echo "  (No orphaned symlinks found)"
 fi
 
 echo ""
 
-# ── Link Skills ──────────────────────────────
+# ── Link Skills (from plugins/*/skills/) ──────
 echo -e "${BLUE}Linking skills...${NC}"
 
-if [ -d "$FACTORY_DIR/skills" ]; then
-  for skill_dir in "$FACTORY_DIR/skills"/*/; do
-    [ -d "$skill_dir" ] || continue
+for plugin_dir in "$FACTORY_DIR/plugins"/*/; do
+  [ -d "$plugin_dir/skills" ] || continue
+  plugin_name=$(basename "$plugin_dir")
 
+  for skill_dir in "$plugin_dir/skills"/*/; do
+    [ -d "$skill_dir" ] || continue
     skill_name=$(basename "$skill_dir")
     target="$CLAUDE_SKILLS_DIR/$skill_name"
 
@@ -175,31 +175,31 @@ if [ -d "$FACTORY_DIR/skills" ]; then
     elif [ -L "$target" ]; then
       rm "$target"
       ln -s "$skill_dir" "$target"
-      echo -e "  ${GREEN}↻${NC}  Updated: $skill_name"
+      echo -e "  ${GREEN}↻${NC}  Updated [$plugin_name]: $skill_name"
       ((skill_count++)) || true
     else
       ln -s "$skill_dir" "$target"
-      echo -e "  ${GREEN}✓${NC}  Linked: $skill_name"
+      echo -e "  ${GREEN}✓${NC}  Linked [$plugin_name]: $skill_name"
       ((skill_count++)) || true
     fi
   done
+done
 
-  if [ "$skill_count" -eq 0 ] && [ "$skip_count" -eq 0 ]; then
-    echo "  (No skills found yet)"
-  fi
-else
-  echo "  (skills/ directory not found)"
+if [ "$skill_count" -eq 0 ] && [ "$skip_count" -eq 0 ]; then
+  echo "  (No skills found in plugins/)"
 fi
 
 echo ""
 
-# ── Link Agents ──────────────────────────────
+# ── Link Agents (from plugins/*/agents/) ──────
 echo -e "${BLUE}Linking agents...${NC}"
 
-if [ -d "$FACTORY_DIR/agents" ]; then
-  for agent_file in "$FACTORY_DIR/agents"/*.md; do
-    [ -f "$agent_file" ] || continue
+for plugin_dir in "$FACTORY_DIR/plugins"/*/; do
+  [ -d "$plugin_dir/agents" ] || continue
+  plugin_name=$(basename "$plugin_dir")
 
+  for agent_file in "$plugin_dir/agents"/*.md; do
+    [ -f "$agent_file" ] || continue
     agent_name=$(basename "$agent_file")
     target="$CLAUDE_AGENTS_DIR/$agent_name"
 
@@ -209,20 +209,18 @@ if [ -d "$FACTORY_DIR/agents" ]; then
     elif [ -L "$target" ]; then
       rm "$target"
       ln -s "$agent_file" "$target"
-      echo -e "  ${GREEN}↻${NC}  Updated: $agent_name"
+      echo -e "  ${GREEN}↻${NC}  Updated [$plugin_name]: $agent_name"
       ((agent_count++)) || true
     else
       ln -s "$agent_file" "$target"
-      echo -e "  ${GREEN}✓${NC}  Linked: $agent_name"
+      echo -e "  ${GREEN}✓${NC}  Linked [$plugin_name]: $agent_name"
       ((agent_count++)) || true
     fi
   done
+done
 
-  if [ "$agent_count" -eq 0 ] && [ "$skip_count" -eq 0 ]; then
-    echo "  (No agents found yet)"
-  fi
-else
-  echo "  (agents/ directory not found)"
+if [ "$agent_count" -eq 0 ] && [ "$skip_count" -eq 0 ]; then
+  echo "  (No agents found in plugins/)"
 fi
 
 echo ""

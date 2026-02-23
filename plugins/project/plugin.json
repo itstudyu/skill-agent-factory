@@ -1,0 +1,7 @@
+{
+  "name": "project",
+  "description": "Project onboarding: analyzes codebase and generates project-context/",
+  "version": "1.0.0",
+  "skills": [],
+  "agents": ["project-onboarding"]
+}

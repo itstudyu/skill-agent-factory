@@ -1,0 +1,13 @@
+{
+  "name": "figma",
+  "description": "Figma-to-code skills: design analysis, token extraction, component mapping, responsive validation",
+  "version": "1.0.0",
+  "skills": [
+    "figma-code-sync",
+    "figma-design-analyzer",
+    "figma-design-token-extractor",
+    "figma-framework-figma-mapper",
+    "figma-responsive-validator"
+  ],
+  "agents": ["figma-to-code"]
+}

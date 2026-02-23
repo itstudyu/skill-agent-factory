@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
 """
 # スキル・エージェントファクトリー — レジストリ自動同期スクリプト
-# skills/*/metadata.md と agents/*.md をスキャンして registry.md と README.md を更新する
-# Phase A: metadata.md ベースのルーティングに対応
+# plugins/*/skills/*/metadata.md と plugins/*/agents/*.md をスキャンして
+# registry.md と README.md を更新する
+# Phase B: plugin 単位スキャンに対応
 """
 
-import os
 import re
-import sys
 from datetime import date
 from pathlib import Path
 
@@ -15,14 +14,13 @@ from pathlib import Path
 # 設定
 # ============================================================
 FACTORY_ROOT = Path(__file__).parent.parent
-SKILLS_DIR   = FACTORY_ROOT / "skills"
-AGENTS_DIR   = FACTORY_ROOT / "agents"
+PLUGINS_DIR  = FACTORY_ROOT / "plugins"
 REGISTRY_MD  = FACTORY_ROOT / "registry.md"
 README_MD    = FACTORY_ROOT / "README.md"
 TODAY        = date.today().isoformat()
 
-# registry.md に載せない内部エージェント
-SKIP_AGENTS = set()
+# registry.md に載せないエージェント (deprecated など)
+SKIP_AGENTS = {"skill-router"}
 
 
 # ============================================================
@@ -54,7 +52,6 @@ def parse_frontmatter(filepath: Path) -> dict:
         if key and val:
             result[key] = val
 
-    # description の継続行を結合
     def collect_multiline(field_name: str) -> str | None:
         lines_out = []
         in_field = False
@@ -87,79 +84,96 @@ def parse_frontmatter(filepath: Path) -> dict:
 
 
 # ============================================================
-# スキャン
+# スキャン (plugins/ 単位)
 # ============================================================
 def scan_skills() -> list[dict]:
-    """skills/*/metadata.md を優先スキャン。なければ SKILL.md にフォールバック"""
+    """plugins/*/skills/*/metadata.md を優先スキャン。なければ SKILL.md にフォールバック"""
     assets = []
-    if not SKILLS_DIR.exists():
+    if not PLUGINS_DIR.exists():
         return assets
 
-    for skill_dir in sorted(SKILLS_DIR.iterdir()):
-        if not skill_dir.is_dir():
+    for plugin_dir in sorted(PLUGINS_DIR.iterdir()):
+        if not plugin_dir.is_dir():
             continue
-
-        metadata_md = skill_dir / "metadata.md"
-        skill_md    = skill_dir / "SKILL.md"
-
-        # metadata.md 優先
-        if metadata_md.exists():
-            fm = parse_frontmatter(metadata_md)
-            source = "metadata.md"
-        elif skill_md.exists():
-            fm = parse_frontmatter(skill_md)
-            source = "SKILL.md"
-        else:
+        skills_dir = plugin_dir / "skills"
+        if not skills_dir.exists():
             continue
+        plugin_name = plugin_dir.name
 
-        name     = fm.get("name") or skill_dir.name
-        category = fm.get("category") or (name.split("-")[0] if "-" in name else "general")
-        tags     = fm.get("tags", [])
-        desc     = fm.get("use-when") or fm.get("description", "—")
-        model    = fm.get("model", "sonnet")
-        requires = fm.get("requires", "")
+        for skill_dir in sorted(skills_dir.iterdir()):
+            if not skill_dir.is_dir():
+                continue
 
-        assets.append({
-            "name":        name,
-            "type":        "skill",
-            "category":    category,
-            "tags":        tags,
-            "model":       model,
-            "version":     fm.get("version", "v1.0"),
-            "description": desc,
-            "file_path":   f"skills/{skill_dir.name}/SKILL.md",
-            "meta_path":   f"skills/{skill_dir.name}/{source}",
-            "modified":    TODAY,
-            "requires":    requires,
-        })
+            metadata_md = skill_dir / "metadata.md"
+            skill_md    = skill_dir / "SKILL.md"
+
+            if metadata_md.exists():
+                fm = parse_frontmatter(metadata_md)
+                source = "metadata.md"
+            elif skill_md.exists():
+                fm = parse_frontmatter(skill_md)
+                source = "SKILL.md"
+            else:
+                continue
+
+            name     = fm.get("name") or skill_dir.name
+            category = fm.get("category") or plugin_name
+            tags     = fm.get("tags", [])
+            desc     = fm.get("use-when") or fm.get("description", "—")
+            model    = fm.get("model", "sonnet")
+            requires = fm.get("requires", "")
+
+            assets.append({
+                "name":        name,
+                "type":        "skill",
+                "plugin":      plugin_name,
+                "category":    category,
+                "tags":        tags,
+                "model":       model,
+                "version":     fm.get("version", "v1.0"),
+                "description": desc,
+                "file_path":   f"plugins/{plugin_name}/skills/{skill_dir.name}/SKILL.md",
+                "meta_path":   f"plugins/{plugin_name}/skills/{skill_dir.name}/{source}",
+                "modified":    TODAY,
+                "requires":    requires,
+            })
     return assets
 
 
 def scan_agents() -> list[dict]:
+    """plugins/*/agents/*.md をスキャン"""
     assets = []
-    if not AGENTS_DIR.exists():
+    if not PLUGINS_DIR.exists():
         return assets
 
-    for agent_md in sorted(AGENTS_DIR.glob("*.md")):
-        if agent_md.name in SKIP_AGENTS:
+    for plugin_dir in sorted(PLUGINS_DIR.iterdir()):
+        if not plugin_dir.is_dir():
             continue
+        agents_dir = plugin_dir / "agents"
+        if not agents_dir.exists():
+            continue
+        plugin_name = plugin_dir.name
 
-        fm = parse_frontmatter(agent_md)
-        name     = fm.get("name") or agent_md.stem
-        category = name.split("-")[0] if "-" in name else "general"
+        for agent_md in sorted(agents_dir.glob("*.md")):
+            fm   = parse_frontmatter(agent_md)
+            name = fm.get("name") or agent_md.stem
 
-        assets.append({
-            "name":        name,
-            "type":        "agent",
-            "category":    category,
-            "tags":        fm.get("tags", []),
-            "model":       fm.get("model", "sonnet"),
-            "version":     fm.get("version", "v1.0"),
-            "description": fm.get("description", "—"),
-            "file_path":   f"agents/{agent_md.name}",
-            "modified":    TODAY,
-            "requires":    fm.get("requires", ""),
-        })
+            if name in SKIP_AGENTS or fm.get("status") == "deprecated":
+                continue
+
+            assets.append({
+                "name":        name,
+                "type":        "agent",
+                "plugin":      plugin_name,
+                "category":    plugin_name,
+                "tags":        fm.get("tags", []),
+                "model":       fm.get("model", "sonnet"),
+                "version":     fm.get("version", "v1.0"),
+                "description": fm.get("description", "—"),
+                "file_path":   f"plugins/{plugin_name}/agents/{agent_md.name}",
+                "modified":    TODAY,
+                "requires":    fm.get("requires", ""),
+            })
     return assets
 
 
@@ -174,8 +188,8 @@ def fmt_tags(tags: list[str]) -> str:
 
 def build_registry_table(assets: list[dict]) -> str:
     header = (
-        "| Name | Type | Category | Model | Tags | Version | Description | File Path | Last Modified |\n"
-        "|------|------|----------|-------|------|---------|-------------|-----------|---------------|\n"
+        "| Name | Type | Plugin | Model | Tags | Version | Description | File Path | Last Modified |\n"
+        "|------|------|--------|-------|------|---------|-------------|-----------|---------------|\n"
     )
     rows = []
     for a in assets:
@@ -184,7 +198,7 @@ def build_registry_table(assets: list[dict]) -> str:
             desc = desc[:97] + "..."
         tags_str = fmt_tags(a.get("tags", []))
         rows.append(
-            f"| {a['name']} | {a['type']} | {a['category']} | {a.get('model','sonnet')} "
+            f"| {a['name']} | {a['type']} | {a.get('plugin','—')} | {a.get('model','sonnet')} "
             f"| {tags_str} | {a['version']} "
             f"| {desc} | {a['file_path']} | {a['modified']} |"
         )
@@ -195,22 +209,23 @@ def build_statistics(assets: list[dict]) -> str:
     skills = [a for a in assets if a["type"] == "skill"]
     agents = [a for a in assets if a["type"] == "agent"]
 
-    cat_map: dict[str, list[str]] = {}
+    plugin_map: dict[str, list[str]] = {}
     for s in skills:
-        cat_map.setdefault(s["category"], []).append(s["name"])
+        plugin_map.setdefault(s.get("plugin", "—"), []).append(s["name"])
 
     skill_lines = []
-    for cat, names in sorted(cat_map.items()):
-        skill_lines.append(f"  - {cat.capitalize()} ({len(names)}): {', '.join(names)}")
+    for plugin, names in sorted(plugin_map.items()):
+        skill_lines.append(f"  - plugin/{plugin} ({len(names)}): {', '.join(names)}")
 
     agent_names = ", ".join(a["name"] for a in agents)
+    plugin_count = len(list(PLUGINS_DIR.iterdir())) if PLUGINS_DIR.exists() else 0
 
     lines = [
         f"- **Total assets**: {len(assets)}",
         f"- **Skills**: {len(skills)}",
     ] + skill_lines + [
         f"- **Agents**: {len(agents)} ({agent_names})",
-        "- **Plugins**: 0",
+        f"- **Plugins**: {plugin_count} (devops, figma, project)",
         "- **Hooks**: 0",
         "- **MCP Servers**: 0",
         "- **Output Styles**: 0",
@@ -252,13 +267,17 @@ def update_readme(assets: list[dict]):
     skills = [a for a in assets if a["type"] == "skill"]
     agents = [a for a in assets if a["type"] == "agent"]
 
-    cat_map: dict[str, list[dict]] = {}
+    plugin_map: dict[str, list[dict]] = {}
     for s in skills:
-        cat_map.setdefault(s["category"], []).append(s)
+        plugin_map.setdefault(s.get("plugin", "general"), []).append(s)
 
     skill_sections = []
-    for cat, items in sorted(cat_map.items()):
-        header = f"### {cat.capitalize()} Skills\n\n| Skill | Model | Tags | Purpose |\n|-------|-------|------|---------|"
+    for plugin, items in sorted(plugin_map.items()):
+        header = (
+            f"### {plugin.capitalize()} Plugin Skills\n\n"
+            f"| Skill | Model | Tags | Purpose |\n"
+            f"|-------|-------|------|---------|"
+        )
         rows = [
             f"| `{i['name']}` | {i.get('model','sonnet')} | {fmt_tags(i.get('tags',[]))} | {i['description'][:80]} |"
             for i in items
@@ -267,9 +286,9 @@ def update_readme(assets: list[dict]):
 
     skills_block = "\n\n".join(skill_sections)
 
-    agent_header = "### Agents\n\n| Agent | Model | Purpose |\n|-------|-------|---------|"
+    agent_header = "### Agents\n\n| Agent | Plugin | Model | Purpose |\n|-------|--------|-------|---------|"
     agent_rows = [
-        f"| `{a['name']}` | {a.get('model','sonnet')} | {a['description'][:80]} |"
+        f"| `{a['name']}` | {a.get('plugin','—')} | {a.get('model','sonnet')} | {a['description'][:80]} |"
         for a in agents
     ]
     agents_block = agent_header + "\n" + "\n".join(agent_rows)
@@ -291,14 +310,13 @@ def update_readme(assets: list[dict]):
 # ============================================================
 def main():
     print(f"🔍 スキャン開始: {FACTORY_ROOT}")
-    print(f"   metadata.md 優先スキャン (Phase A)")
+    print(f"   Plugin 単位スキャン (Phase B)")
 
     skills = scan_skills()
     agents = scan_agents()
     all_assets = skills + agents
 
-    # ソース統計
-    meta_count = sum(1 for s in skills if "metadata.md" in s.get("meta_path", ""))
+    meta_count     = sum(1 for s in skills if "metadata.md" in s.get("meta_path", ""))
     fallback_count = len(skills) - meta_count
 
     print(f"   スキル: {len(skills)} 件 (metadata.md: {meta_count}, SKILL.md fallback: {fallback_count})")
@@ -309,7 +327,6 @@ def main():
 
     print("\n✨ 同期完了!")
 
-    # 整合性チェック
     for a in all_assets:
         if a["description"] == "—":
             print(f"⚠️  description/use-when 未設定: {a['file_path']}")

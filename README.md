@@ -182,7 +182,7 @@ alias claude='claude --plugin-dir ~/skill-agent-factory'
 
 ## Current Skills & Agents
 
-### Devops Skills
+### Devops Plugin Skills
 
 | Skill | Model | Tags | Purpose |
 |-------|-------|------|---------|
@@ -191,14 +191,13 @@ alias claude='claude --plugin-dir ~/skill-agent-factory'
 | `devops-frontend-review` | sonnet | `review`, `frontend`, `ui`, `pixel-perfect`, `screenshot`, `design-match` | Run after frontend code is written. User provides a screenshot, image, or Figma  |
 | `devops-git-commit` | haiku | `git`, `commit`, `branch`, `version-control` | Run at the END of every development task. User wants to commit code, create a br |
 | `devops-japanese-comments` | haiku | `japanese`, `comments`, `logs`, `localization`, `i18n` | Run after code review. User wants to enforce Japanese in comments/logs, convert  |
-| `devops-pr-description` | sonnet | — | DEPRECATED — このスキルは削除予定です。PR説明文の生成はdevops-git-commitスキルに統合されています。 |
 | `devops-requirements` | sonnet | `requirements`, `planning`, `spec`, `feature`, `analysis` | Run at the START of every development request, before writing any code. User wan |
 | `devops-safety-check` | haiku | `security`, `safety`, `secrets`, `vulnerability`, `sql-injection`, `xss` | Run after code is written. Quick security scan for secrets, SQL injection, XSS,  |
 | `devops-skill-eval` | sonnet | `eval`, `quality`, `skill`, `validate`, `test`, `benchmark` | User wants to test a skill before deploying, validate a newly created skill, or  |
 | `devops-test-gen` | sonnet | `test`, `generate`, `unit-test`, `coverage`, `jest`, `pytest` | Run after code review is clean. User wants to generate unit tests for new code.  |
 | `devops-version-check` | haiku | `version`, `dependency`, `package`, `compatibility`, `deprecated` | User wants to verify code syntax for the project language version, check depreca |
 
-### Figma Skills
+### Figma Plugin Skills
 
 | Skill | Model | Tags | Purpose |
 |-------|-------|------|---------|
@@ -210,12 +209,11 @@ alias claude='claude --plugin-dir ~/skill-agent-factory'
 
 ### Agents
 
-| Agent | Model | Purpose |
-|-------|-------|---------|
-| `devops-pipeline` | sonnet | Development pipeline orchestrator. Called by skill-router for development tasks. |
-| `figma-to-code` | opus | Converts Figma designs into production-ready frontend code. Use proactively when |
-| `project-onboarding` | sonnet | Project onboarding agent. Auto-detects existing vs new projects, analyzes code p |
-| `skill-router` | sonnet | Central skill router for all user requests. Uses 2-phase matching — lightweight  |
+| Agent | Plugin | Model | Purpose |
+|-------|--------|-------|---------|
+| `devops-pipeline` | devops | sonnet | Development pipeline orchestrator. Called by skill-router for development tasks. |
+| `figma-to-code` | figma | opus | Converts Figma designs into production-ready frontend code. Use proactively when |
+| `project-onboarding` | project | sonnet | Project onboarding agent. Auto-detects existing vs new projects, analyzes code p |
 
 
 ## Automation Scripts
