@@ -33,13 +33,14 @@ When creating skills/agents for this category, consider these common stacks:
 ## Directory Layout
 
 ```
-backend/
-├── CLAUDE.md              ← This file
-├── skills/                ← Skills for backend tasks
-│   └── {skill-name}/
-│       └── SKILL.md
-└── agents/                ← Agents for backend workflows
-    └── {agent-name}.md
+plugins/backend/                ← future plugin
+├── plugin.json
+├── agents/                     ← Agents for backend workflows
+│   └── {agent-name}.md
+└── skills/                     ← Skills for backend tasks
+    └── {skill-name}/
+        ├── metadata.md         ← Tier 1: routing (always loaded)
+        └── SKILL.md            ← Tier 2: full instructions
 ```
 
 ---

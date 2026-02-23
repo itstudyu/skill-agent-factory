@@ -20,9 +20,6 @@ REGISTRY_MD  = FACTORY_ROOT / "registry.md"
 README_MD    = FACTORY_ROOT / "README.md"
 TODAY        = date.today().isoformat()
 
-# registry.md に載せないエージェント (deprecated など)
-SKIP_AGENTS = {"skill-router"}
-
 
 # ============================================================
 # フロントマターパーサー
@@ -159,7 +156,7 @@ def scan_agents() -> list[dict]:
             fm   = parse_frontmatter(agent_md)
             name = fm.get("name") or agent_md.stem
 
-            if name in SKIP_AGENTS or fm.get("status") == "deprecated":
+            if fm.get("status") == "deprecated":
                 continue
 
             assets.append({

@@ -7,7 +7,7 @@
 
 ## Project Overview
 
-**Skill & Agent Factory** is a centralized workspace for creating, managing, and using Claude Code skills and agents. When a user describes a task, Claude routes it through the **skill-router** agent, which reads all `skills/*/metadata.md` files (lightweight tag-based filter) then reads `SKILL.md` only for matched candidates.
+**Skill & Agent Factory** is a centralized workspace for creating, managing, and using Claude Code skills and agents. All assets are organized in a **plugin-based structure** (`plugins/devops/`, `plugins/figma/`, `plugins/project/`). Routing uses a **3-tier architecture**: `metadata.md` (always loaded, lightweight tag scan) → `SKILL.md` (loaded on match) → `resources/` (loaded on demand).
 
 Asset types supported:
 1. **Skills** (`SKILL.md`) — Reusable capability modules for Claude Code
@@ -27,15 +27,17 @@ All assets are **Claude Code-compatible** and ready to copy directly into any pr
 ```
 User Request
     ↓
-skill-router          ← Phase 1: reads all metadata.md (tag scan, ~10 lines each)
-    ↓                    Phase 2: reads SKILL.md for top 3~5 candidates only
-Domain Skill(s)       ← backend / frontend / database / figma / etc.
+CLAUDE.md (this file)     ← routing rules defined here
     ↓
-devops-pipeline       ← quality gate for all coding tasks
+metadata.md scan          ← Tier 1: tags + use-when match (~10 lines each)
+    ↓
+SKILL.md load             ← Tier 2: full instructions, only for matched skill
+    ↓
+devops-pipeline           ← quality gate for all coding tasks
 ```
 
-- For **clear, single-skill** requests → invoke the skill directly
-- For **ambiguous or multi-domain** requests → invoke `skill-router` first
+- For **clear, single-skill** requests → invoke the skill directly via `metadata.md` tag match
+- For **Figma** requests → `devops-pipeline` → `figma-to-code` agent
 - For **all coding tasks** → `devops-pipeline` always runs after domain skills
 
 ---

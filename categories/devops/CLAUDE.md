@@ -37,18 +37,16 @@ All DevOps skills are organized as a **sequential pipeline** that runs for every
 
 | Step | Skill File | Purpose |
 |------|-----------|---------|
-| 1 | `skills/devops-requirements/` | Requirements gathering — hard gate |
-| 2 | `skills/devops-safety-check/` | Lightweight security scan |
-| 3 | `skills/devops-code-review/` | Logic, memory, performance |
-| 4 | `skills/devops-japanese-comments/` | Enforce Japanese comments |
-| 5 | `skills/devops-frontend-review/` | Pixel-perfect UI check (conditional) |
-| 6 | `skills/devops-version-check/` | Version & deprecated API check |
-| 7 | `skills/devops-test-gen/` | Auto-generate unit tests |
-| 8 | `skills/devops-git-commit/` | Branch strategy + Japanese commit |
+| 1 | `plugins/devops/skills/devops-requirements/` | Requirements gathering — hard gate |
+| 2 | `plugins/devops/skills/devops-safety-check/` | Lightweight security scan |
+| 3 | `plugins/devops/skills/devops-code-review/` | Logic, memory, performance |
+| 4 | `plugins/devops/skills/devops-japanese-comments/` | Enforce Japanese comments |
+| 5 | `plugins/devops/skills/devops-frontend-review/` | Pixel-perfect UI check (conditional) |
+| 6 | `plugins/devops/skills/devops-version-check/` | Version & deprecated API check |
+| 7 | `plugins/devops/skills/devops-test-gen/` | Auto-generate unit tests |
+| 8 | `plugins/devops/skills/devops-git-commit/` | Branch strategy + Japanese commit |
 
-Orchestrated by: `agents/devops-pipeline.md`
-
-> All skills and agents live in the root `skills/` and `agents/` directories (not in this category folder).
+Orchestrated by: `plugins/devops/agents/devops-pipeline.md`
 
 ---
 
@@ -56,17 +54,19 @@ Orchestrated by: `agents/devops-pipeline.md`
 
 ```
 skill-agent-factory/
-├── skills/
-│   ├── devops-requirements/SKILL.md
-│   ├── devops-safety-check/SKILL.md
-│   ├── devops-code-review/SKILL.md
-│   ├── devops-japanese-comments/SKILL.md
-│   ├── devops-frontend-review/SKILL.md
-│   ├── devops-version-check/SKILL.md
-│   ├── devops-test-gen/SKILL.md
-│   └── devops-git-commit/SKILL.md
-└── agents/
-    └── devops-pipeline.md
+└── plugins/devops/
+    ├── plugin.json
+    ├── agents/
+    │   └── devops-pipeline.md
+    └── skills/
+        ├── devops-requirements/   (metadata.md + SKILL.md)
+        ├── devops-safety-check/
+        ├── devops-code-review/
+        ├── devops-japanese-comments/
+        ├── devops-frontend-review/
+        ├── devops-version-check/
+        ├── devops-test-gen/
+        └── devops-git-commit/
 ```
 
 ---

@@ -379,6 +379,77 @@ def check_dep_depth(all_skill_names: set) -> int:
 
 
 # ============================================================
+# ドキュメント drift チェック
+# ============================================================
+# deprecated/removed になったキーワードがドキュメントに残っていないか検査する。
+# 各エントリ: (pattern, message, is_error)
+#   is_error=True  → ✗ ERROR (--strict 不要でも失敗)
+#   is_error=False → ⚠ WARN
+DOC_FORBIDDEN: list[tuple[str, str, bool]] = [
+    (
+        r"skill-router",
+        "deprecated agent 'skill-router' の参照が残っている — CLAUDE.md 直接ルーティングに更新してください",
+        True,
+    ),
+    (
+        r"skills/\*/",
+        "旧フラット構造 'skills/*/' の参照 — 'plugins/*/skills/*/' に更新してください",
+        True,
+    ),
+    (
+        r"agents/\*/",
+        "旧フラット構造 'agents/*/' の参照 — 'plugins/*/agents/' に更新してください",
+        True,
+    ),
+]
+
+# チェック対象ファイル (glob パターン, 除外パターン)
+DOC_TARGETS: list[tuple[str, list[str]]] = [
+    ("CLAUDE.md",          ["agents/                ← Legacy"]),   # Legacy note は許可
+    ("README.md",          []),
+    ("_docs/*.md",         ["Doc Drift",             # Drift 説明行は許可
+                            "✗ ERROR — Doc Drift"]),
+    ("categories/**/*.md", []),                                    # カテゴリ規約ファイル
+]
+
+def check_doc_drift() -> tuple[int, int]:
+    """
+    ドキュメント内に deprecated キーワードが残っていないかチェックする。
+    (errors, warnings) を返す。
+    """
+    errors = warnings = 0
+
+    for glob_pattern, allowlist in DOC_TARGETS:
+        for filepath in sorted(FACTORY_ROOT.glob(glob_pattern)):
+            rel = filepath.relative_to(FACTORY_ROOT)
+            try:
+                lines = filepath.read_text(encoding="utf-8").splitlines()
+            except Exception:
+                continue
+
+            for lineno, line in enumerate(lines, 1):
+                # allowlist にマッチする行はスキップ
+                if any(skip in line for skip in allowlist):
+                    continue
+                # ファイル自身の定義行はスキップ (lint-skills.py の DOC_FORBIDDEN 定義)
+                if filepath.name == "lint-skills.py" and "DOC_FORBIDDEN" in line:
+                    continue
+
+                for pattern, message, is_error in DOC_FORBIDDEN:
+                    if re.search(pattern, line):
+                        location = f"{rel}:{lineno}"
+                        if is_error:
+                            err(f"[{location}] {message}")
+                            errors += 1
+                        else:
+                            warn(f"[{location}] {message}")
+                            warnings += 1
+                        break   # 1行につき1件のみ報告
+
+    return errors, warnings
+
+
+# ============================================================
 # メイン
 # ============================================================
 def collect_all_skill_dirs() -> list[Path]:
@@ -483,6 +554,16 @@ def main() -> int:
     total_warnings += teams_warnings
     if teams_errors == 0 and teams_warnings == 0:
         ok("全 teams エントリの参照が正常")
+
+    print()
+
+    # ── ドキュメント drift チェック ──────────────────────
+    print(f"{BOLD}📄 ドキュメント Drift チェック{RESET}")
+    drift_errors, drift_warnings = check_doc_drift()
+    total_errors   += drift_errors
+    total_warnings += drift_warnings
+    if drift_errors == 0 and drift_warnings == 0:
+        ok("deprecated キーワードなし")
 
     print()
 

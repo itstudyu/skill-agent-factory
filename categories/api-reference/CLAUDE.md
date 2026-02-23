@@ -33,13 +33,14 @@ When creating skills/agents for this category:
 ## Directory Layout
 
 ```
-api-reference/
-├── CLAUDE.md              ← This file
-├── skills/                ← Skills for API documentation & integration
-│   └── {skill-name}/
-│       └── SKILL.md
-└── agents/                ← Agents for API workflows
-    └── {agent-name}.md
+plugins/api-reference/          ← future plugin
+├── plugin.json
+├── agents/                     ← Agents for API workflows
+│   └── {agent-name}.md
+└── skills/                     ← Skills for API documentation & integration
+    └── {skill-name}/
+        ├── metadata.md         ← Tier 1: routing (always loaded)
+        └── SKILL.md            ← Tier 2: full instructions
 ```
 
 ---

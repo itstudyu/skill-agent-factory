@@ -213,7 +213,7 @@ claude --plugin-dir ~/path/to/skill-agent-factory
 
 | Agent | Plugin | Model | Purpose |
 |-------|--------|-------|---------|
-| `devops-pipeline` | devops | sonnet | Development pipeline orchestrator. Called by skill-router for development tasks. |
+| `devops-pipeline` | devops | sonnet | Development pipeline orchestrator. Automatically invoked by CLAUDE.md for all de |
 | `figma-to-code` | figma | opus | Converts Figma designs into production-ready frontend code. Use proactively when |
 | `project-onboarding` | project | sonnet | Project onboarding agent. Auto-detects existing vs new projects, analyzes code p |
 

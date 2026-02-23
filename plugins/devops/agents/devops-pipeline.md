@@ -1,6 +1,6 @@
 ---
 name: devops-pipeline
-description: Development pipeline orchestrator. Called by skill-router for development tasks. Trigger directly only when the user explicitly names this pipeline (e.g., "run devops pipeline", "start the pipeline") — for all other requests, skill-router routes here automatically. Handles: implement, write code, fix bug, add feature, create API, build component.
+description: Development pipeline orchestrator. Automatically invoked by CLAUDE.md for all development tasks. Trigger directly only when the user explicitly names this pipeline (e.g., "run devops pipeline", "start the pipeline"). Handles: implement, write code, fix bug, add feature, create API, build component.
 tools: Read, Write, Edit, Bash, Grep, Glob, Task
 model: sonnet
 version: v1.0
@@ -54,19 +54,9 @@ Glob: project-context/structure.md
 
 ## STEP_MODE — モード検出 (必ず最初に実行)
 
-### 優先順位: 引き継ぎ情報 → ユーザー指定 → 自動検出
+### 優先順位: ユーザー指定 → 自動検出
 
-**① skill-router からの引き継ぎ情報がある場合 → 再分析しない**
-
-```
-"📦 skill-router → devops-pipeline 引き継ぎ情報" ブロックが存在する場合:
-  → 「推定 MODE」をそのまま採用
-  → STEP_PLAN へ直接進む (検出ルール実行不要)
-
-✅ skill-router 引き継ぎ: MODE = {NEW/FEATURE/BUGFIX/PATCH} — 再分析スキップ
-```
-
-**② ユーザーが明示的に指定している場合 → そのまま採用**
+**① ユーザーが明示的に指定している場合 → そのまま採用**
 
 ```
 "mode: new/feature/bugfix/patch" の指定がある場合:
@@ -74,7 +64,7 @@ Glob: project-context/structure.md
   → STEP_PLAN へ直接進む
 ```
 
-**③ どちらもない場合 (直接呼び出し) → 以下のルールで自動検出**
+**② どちらもない場合 (直接呼び出し) → 以下のルールで自動検出**
 
 ### 検出ルール
 

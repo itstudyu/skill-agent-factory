@@ -84,7 +84,7 @@ plugins/
 
 ## 2. 라우팅 방식
 
-### skill-router는 더 이상 사용하지 않습니다 (deprecated)
+### CLAUDE.md 직접 라우팅 (구 방식: agent 기반 라우팅은 제거됨)
 
 `CLAUDE.md`가 직접 라우팅 규칙을 담습니다:
 
@@ -395,6 +395,208 @@ skill-agent-factory/
     ├── output-styles.md
     └── agent-teams.md
 ```
+
+---
+
+## 11. 기능 추가 가이드
+
+> 새 스킬·에이전트·플러그인·팀을 추가할 때의 체크리스트입니다.
+> 순서를 지키면 `make validate`가 자동으로 문제를 잡아줍니다.
+
+---
+
+### A. 스킬 하나 추가하기
+
+```
+1. 디렉토리 생성
+   mkdir -p plugins/{plugin}/skills/{plugin}-{name}
+
+2. metadata.md 작성 (Tier 1 — 필수)
+   ---
+   name: {plugin}-{name}
+   version: v1.0
+   description: 무엇을 하는 스킬인지 한 줄 설명
+   tags: [domain, action, ...]
+   use-when: >
+     언제 이 스킬을 써야 하는지 자연어로 설명
+   model: sonnet
+   allowed-tools: Read, Grep, Glob
+   ---
+
+3. SKILL.md 작성 (Tier 2 — 필수)
+   ---
+   name: {plugin}-{name}
+   version: v1.0
+   description: ...
+   tags: [...]
+   requires: []          # 의존 스킬이 있으면 여기에 추가
+   allowed-tools: ...
+   ---
+   # 스킬 제목
+   ## 지침 (Step-by-step)
+   ...
+
+4. resources/ 추가 (Tier 3 — 선택)
+   mkdir -p plugins/{plugin}/skills/{plugin}-{name}/resources
+   # 체크리스트, 템플릿, 예시 파일 등을 배치
+
+5. plugin.json 의 teams: 에 추가 (해당 팀이 있으면)
+   "review-team": ["...", "{plugin}-{name}"]
+
+6. 검증
+   make validate
+   # ✅ 에러 없으면 완료
+```
+
+---
+
+### B. 에이전트 추가하기
+
+```
+1. 파일 생성
+   touch plugins/{plugin}/agents/{plugin}-{agent-name}.md
+
+2. 프론트매터 작성
+   ---
+   name: {plugin}-{agent-name}
+   version: v1.0
+   description: 이 에이전트가 하는 일
+   tools: Read, Write, Edit, Bash, Grep, Glob
+   model: sonnet          # 복잡한 오케스트레이션은 opus
+   ---
+
+3. 지침 본문 작성
+   ## 역할
+   ## 실행 단계
+   ## 제약사항
+
+4. 검증
+   make validate && make sync
+   # sync 후 README.md Agent 테이블이 자동 갱신됨
+```
+
+---
+
+### C. 새 플러그인 추가하기 (예: backend)
+
+```
+1. 디렉토리 구조 생성
+   mkdir -p plugins/backend/skills
+   mkdir -p plugins/backend/agents
+
+2. plugin.json 작성
+   {
+     "name": "backend",
+     "version": "1.0.0",
+     "description": "Backend development skills and agents",
+     "teams": {
+       "review-team":  [],
+       "quality-team": [],
+       "commit-team":  [],
+       "feature-team": []
+     }
+   }
+
+3. categories/backend/CLAUDE.md 의 Directory Layout 업데이트
+
+4. 스킬·에이전트를 위 A/B 가이드대로 추가
+
+5. 검증
+   make validate
+```
+
+---
+
+### D. Agent Teams 구현하기 (현재: 선언만 존재, 오케스트레이터 미구현)
+
+**현재 상태:**
+- `plugin.json` 의 `teams:` 필드로 멤버십은 선언됨
+- `make lint` 가 팀 정합성 자동 검증
+- **실제 팀 오케스트레이터 에이전트는 아직 없음**
+
+**구현 로드맵:**
+
+```
+Step 1 — 팀 오케스트레이터 에이전트 작성
+   touch plugins/devops/agents/devops-team-runner.md
+
+   역할: plugin.json의 teams: 를 읽어
+         해당 팀의 스킬들을 지정 방식으로 실행
+
+   review-team  → Task 툴로 병렬 서브에이전트 실행
+   quality-team → 스킬 순서대로 순차 실행
+   commit-team  → 순차 실행 + 사용자 확인 게이트
+   feature-team → 첫 스킬 완료 후 다음 스킬 실행 (게이트)
+
+Step 2 — CLAUDE.md 라우팅에 팀 실행 트리거 추가
+   예: "전체 리뷰 돌려줘" → review-team 실행
+   예: "코드 품질 체크" → quality-team 실행
+
+Step 3 — make validate 에 팀 실행 테스트 추가
+   devops-skill-eval 스킬로 팀 단위 시나리오 테스트
+
+예시 — review-team 오케스트레이터:
+─────────────────────────────────
+---
+name: devops-team-runner
+description: Runs Agent Teams by reading plugin.json teams declaration.
+  Invoke with "run {team-name}" to execute all member skills.
+model: sonnet
+tools: Read, Task
+---
+
+## 実行手順
+
+1. `plugins/devops/plugin.json` を読み込み、指定された team のメンバー一覧を取得
+2. チームタイプに応じて実行方式を決定:
+   - review-team  → Task ツールで全メンバーを並列実行
+   - quality-team → メンバーを順次実行
+   - commit-team  → 順次実行 → ユーザー確認 → コミット
+   - feature-team → Gate: 前スキル完了後に次スキル実行
+3. 各スキルの結果を集約してサマリー出力
+─────────────────────────────────
+```
+
+---
+
+### E. 既存スキルに resources/ を追加する
+
+```
+1. ディレクトリ生成
+   mkdir -p plugins/{plugin}/skills/{skill-name}/resources
+
+2. ファイル配置 (例)
+   resources/checklist.md    ← 확인 항목 목록
+   resources/template.md     ← 출력 템플릿
+   resources/examples/       ← 입력/출력 예시 모음
+
+3. SKILL.md 본문에서 on-demand 로드 지시 추가
+   ## 리소스 활용
+   필요 시 `resources/checklist.md` 를 읽어 항목별로 검사한다.
+   (항상 읽지 않음 — 사용자가 요청하거나 해당 단계에 도달했을 때만)
+
+4. 검증
+   make lint   # Tier 3 파일은 lint 대상 아님, 이상 없으면 OK
+```
+
+---
+
+### F. 어떤 변경이 make validate 에서 자동으로 잡히나?
+
+| 실수 | 잡히는 체크 |
+|------|------------|
+| `requires:` 에 존재하지 않는 스킬명 기재 | ✗ ERROR — 의존성 참조 오류 |
+| `teams:` 에 존재하지 않는 스킬명 기재 | ✗ ERROR — Teams 정합성 |
+| `teams:` 에 정의되지 않은 팀명 사용 | ✗ ERROR — 미정의 팀명 |
+| 순환 의존 (A→B→A) | ✗ ERROR — 순환 참조 |
+| 의존 체인 3단계 이상 | ⚠ WARN — dep 체인 깊이 |
+| `name:` / `description:` 누락 | ✗ ERROR — frontmatter 필수 필드 |
+| 문서에 `skill-router` 참조 잔존 | ✗ ERROR — Doc Drift |
+| 문서에 구 `skills/*/` 경로 잔존 | ✗ ERROR — Doc Drift |
+| README.md Skills/Agents 테이블 outdated | 자동수정 — `make sync` |
+| README.md Teams 테이블 outdated | 자동수정 — `make sync` |
+
+**→ 새 기능을 추가한 후 `make validate` 가 통과하면 병합 준비 완료입니다.**
 
 ---
 

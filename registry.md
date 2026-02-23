@@ -33,7 +33,7 @@
 | figma-design-token-extractor | skill | figma | sonnet | `figma`, `design-token`, `colors`, `typography`, `css`, `scss`, `extract` | v1.0 | User wants to extract design tokens from Figma (colors, fonts, spacing, shadows) and convert to C... | plugins/figma/skills/figma-design-token-extractor/SKILL.md | 2026-02-23 |
 | figma-framework-figma-mapper | skill | figma | sonnet | `figma`, `framework`, `component`, `mapping`, `ui-kit`, `primefaces` | v1.0 | User wants to map UI framework components (PrimeFaces, custom) to Figma design components. Genera... | plugins/figma/skills/figma-framework-figma-mapper/SKILL.md | 2026-02-23 |
 | figma-responsive-validator | skill | figma | haiku | `figma`, `responsive`, `validate`, `mobile`, `layout`, `breakpoint`, `tablet` | v1.0 | User wants to validate responsive design across Mobile, Tablet, Desktop breakpoints. Detects layo... | plugins/figma/skills/figma-responsive-validator/SKILL.md | 2026-02-23 |
-| devops-pipeline | agent | devops | sonnet | — | v1.0 | Development pipeline orchestrator. Called by skill-router for development tasks. Trigger directly... | plugins/devops/agents/devops-pipeline.md | 2026-02-23 |
+| devops-pipeline | agent | devops | sonnet | — | v1.0 | Development pipeline orchestrator. Automatically invoked by CLAUDE.md for all development tasks. ... | plugins/devops/agents/devops-pipeline.md | 2026-02-23 |
 | figma-to-code | agent | figma | opus | — | v1.0 | Converts Figma designs into production-ready frontend code. Use proactively when the user wants t... | plugins/figma/agents/figma-to-code.md | 2026-02-23 |
 | project-onboarding | agent | project | sonnet | — | v1.0 | Project onboarding agent. Auto-detects existing vs new projects, analyzes code patterns, and gene... | plugins/project/agents/project-onboarding.md | 2026-02-23 |
 
@@ -43,8 +43,8 @@
 
 | Type | Format | Where to Place |
 |------|--------|----------------|
-| `skill` | `SKILL.md` with frontmatter | `{category}/skills/{name}/SKILL.md` |
-| `agent` | `.md` with frontmatter | `{category}/agents/{name}.md` |
+| `skill` | `metadata.md` + `SKILL.md` | `plugins/{plugin}/skills/{name}/` |
+| `agent` | `.md` with frontmatter | `plugins/{plugin}/agents/{name}.md` |
 | `plugin` | Plugin directory with `.claude-plugin/plugin.json` | Project root or separate repo |
 | `hook` | JSON config in `hooks/hooks.json` | Project `.claude/settings.json` or plugin `hooks/` |
 | `mcp` | `claude mcp add` command or `.mcp.json` | Project `.mcp.json` or user `~/.claude.json` |

@@ -46,10 +46,14 @@ if [ "$MODE" = "--uninstall" ]; then
 
   removed=0
 
-  # Remove symlinked skills
+  # Remove symlinked skills (plugins/ and legacy skills/)
   if [ -d "$CLAUDE_SKILLS_DIR" ]; then
     for link in "$CLAUDE_SKILLS_DIR"/*/; do
-      if [ -L "${link%/}" ] && [[ "$(readlink "${link%/}")" == "$FACTORY_DIR/skills/"* ]]; then
+      target_path="$(readlink "${link%/}" 2>/dev/null || true)"
+      if [ -L "${link%/}" ] && {
+        [[ "$target_path" == "$FACTORY_DIR/plugins/"* ]] ||
+        [[ "$target_path" == "$FACTORY_DIR/skills/"* ]];
+      }; then
         rm "${link%/}"
         echo -e "  ${RED}✗${NC} Removed skill: $(basename "${link%/}")"
         ((removed++)) || true
@@ -57,10 +61,14 @@ if [ "$MODE" = "--uninstall" ]; then
     done
   fi
 
-  # Remove symlinked agents
+  # Remove symlinked agents (plugins/ and legacy agents/)
   if [ -d "$CLAUDE_AGENTS_DIR" ]; then
     for link in "$CLAUDE_AGENTS_DIR"/*.md; do
-      if [ -L "$link" ] && [[ "$(readlink "$link")" == "$FACTORY_DIR/agents/"* ]]; then
+      target_path="$(readlink "$link" 2>/dev/null || true)"
+      if [ -L "$link" ] && {
+        [[ "$target_path" == "$FACTORY_DIR/plugins/"* ]] ||
+        [[ "$target_path" == "$FACTORY_DIR/agents/"* ]];
+      }; then
         rm "$link"
         echo -e "  ${RED}✗${NC} Removed agent: $(basename "$link")"
         ((removed++)) || true

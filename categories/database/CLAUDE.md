@@ -33,13 +33,14 @@ When creating skills/agents, consider these common databases:
 ## Directory Layout
 
 ```
-database/
-├── CLAUDE.md              ← This file
-├── skills/                ← Skills for database tasks
-│   └── {skill-name}/
-│       └── SKILL.md
-└── agents/                ← Agents for database workflows
-    └── {agent-name}.md
+plugins/database/               ← future plugin
+├── plugin.json
+├── agents/                     ← Agents for database workflows
+│   └── {agent-name}.md
+└── skills/                     ← Skills for database tasks
+    └── {skill-name}/
+        ├── metadata.md         ← Tier 1: routing (always loaded)
+        └── SKILL.md            ← Tier 2: full instructions
 ```
 
 ---

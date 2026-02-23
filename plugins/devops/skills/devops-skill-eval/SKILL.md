@@ -16,8 +16,9 @@ allowed-tools: Read, Write, Glob, Bash
 ## STEP 1 — 対象スキルの読み込み
 
 ```
-# 評価対象スキルを指定
-Read: skills/{skill-name}/SKILL.md
+# 評価対象スキルを指定 (Tier 1 + Tier 2)
+Read: plugins/{plugin}/skills/{skill-name}/metadata.md
+Read: plugins/{plugin}/skills/{skill-name}/SKILL.md
 ```
 
 以下を抽出する:

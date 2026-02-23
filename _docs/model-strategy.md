@@ -55,7 +55,6 @@ MCP サーバー経由で Gemini Vision API を呼び出し
 
 使用しているエージェント/スキル:
 - `devops-pipeline` (sonnet)
-- `skill-router` (sonnet)
 - `devops-code-review`, `devops-arch-review` など全 devops スキル
 
 ---
@@ -113,19 +112,21 @@ Gemini / GPT-4o が必要な場合 → MCP サーバー経由で将来対応
 |---------|------|-------|
 | Phase 1 | Gemini Vision MCP サーバー構築 — 画像→コード精度向上 | 高 |
 | Phase 2 | GPT-4o MCP サーバー構築 — 文書生成の選択肢追加 | 中 |
-| Phase 3 | skill-router にモデル選択ロジック追加 — タスク→モデル自動振り分け | 中 |
+| Phase 3 | metadata.md にモデル選択ロジック追加 — タスク→モデル自動振り分け | 中 |
 | Phase 4 | コスト最適化 — タスク複雑度に応じて Haiku / Sonnet / Opus を動的選択 | 低 |
 
 ---
 
-## skill-router との連携（将来）
+## metadata.md ルーティングとの連携（将来）
 
 Phase 3 実装後のフロー:
 
 ```
 User Request
     ↓
-skill-router (スキル選択)
+CLAUDE.md (ルーティング)
+    ↓
+metadata.md タグスキャン (スキル選択)
     ↓
 model-selector (タスクタイプ → モデル決定)
     ├─ 画像あり → Gemini Vision MCP
