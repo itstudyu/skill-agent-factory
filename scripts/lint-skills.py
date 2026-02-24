@@ -24,9 +24,13 @@ PLUGINS_DIR  = FACTORY_ROOT / "plugins"
 STRICT_MODE  = "--strict" in sys.argv
 
 # 実行時に生成されるパスは存在チェックから除外
+# (スキルが対象リポジトリで参照するファイルパスも含む)
 RUNTIME_PATH_PREFIXES = (
     "project-context/",
     ".skill-factory-context",
+    "pom.xml",          # Maven プロジェクトファイル (対象リポジトリ)
+    "build.gradle",     # Gradle プロジェクトファイル (対象リポジトリ)
+    "package.json",     # npm プロジェクトファイル (対象リポジトリ)
 )
 
 # ── ANSI カラー ──────────────────────────────────────────
@@ -253,7 +257,7 @@ def check_agent(agent_file: Path, all_skill_names: set) -> tuple[int, int]:
 
 MAX_DEP_DEPTH = 3  # これ以上深い依存チェーンは警告
 
-KNOWN_TEAMS = {"review-team", "quality-team", "commit-team", "feature-team"}
+KNOWN_TEAMS = {"review-team", "quality-team", "commit-team", "feature-team", "eventbus-team"}
 
 
 def check_teams(all_skill_names: set) -> tuple[int, int]:

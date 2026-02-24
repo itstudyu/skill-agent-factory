@@ -63,6 +63,7 @@ Skills across plugins are grouped into **teams** for coordinated execution. Team
 | Team | Execution | Members |
 |------|-----------|---------|
 | `commit-team` | **Sequential** | devops-git-commit |
+| `eventbus-team` | — | vertx-repo-analyzer, vertx-eventbus-register, vertx-api-caller |
 | `feature-team` | **Gated** | devops-requirements, devops-frontend-review, figma-design-analyzer, figma-design-token-extractor, figma-framework-figma-mapper, figma-code-sync |
 | `quality-team` | **Sequential** | devops-test-gen, devops-japanese-comments, devops-version-check |
 | `review-team` | **Parallel** | devops-code-review, devops-arch-review, devops-safety-check, figma-responsive-validator |
@@ -208,6 +209,14 @@ claude --plugin-dir ~/path/to/skill-agent-factory
 | `figma-design-token-extractor` | sonnet | `figma`, `design-token`, `colors`, `typography`, `css`, `scss`, `extract` | User wants to extract design tokens from Figma (colors, fonts, spacing, shadows) |
 | `figma-framework-figma-mapper` | sonnet | `figma`, `framework`, `component`, `mapping`, `ui-kit`, `primefaces` | User wants to map UI framework components (PrimeFaces, custom) to Figma design c |
 | `figma-responsive-validator` | haiku | `figma`, `responsive`, `validate`, `mobile`, `layout`, `breakpoint`, `tablet` | User wants to validate responsive design across Mobile, Tablet, Desktop breakpoi |
+
+### Vertx Plugin Skills
+
+| Skill | Model | Tags | Purpose |
+|-------|-------|------|---------|
+| `vertx-api-caller` | sonnet | `vertx`, `eventbus`, `frontend`, `javascript`, `sockjs`, `api-call` | フロントエンド（JavaScript/TypeScript）から Vert.x EventBus を呼び出すコードを書きたいとき。SockJS + EventB |
+| `vertx-eventbus-register` | sonnet | `vertx`, `java`, `java7`, `eventbus`, `handler`, `register`, `verticle` | Vert.x EventBus に新しいエンドポイント（ハンドラ）を追加したいとき。Java 7 の匿名内部クラス形式でハンドラを登録する。既存の Vertic |
+| `vertx-repo-analyzer` | sonnet | `vertx`, `java`, `eventbus`, `verticle`, `analysis`, `repo` | Vert.x プロジェクトの構造を把握したいとき。EventBus のエンドポイント一覧を確認したいとき。既存の Verticle クラスを調べたいとき。新しい |
 
 ### Agents
 

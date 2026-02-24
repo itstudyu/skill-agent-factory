@@ -113,9 +113,13 @@ skill-agent-factory/
 │   │   ├── plugin.json
 │   │   ├── agents/figma-to-code.md
 │   │   └── skills/{skill-name}/
-│   └── project/           ← Project plugin (project-onboarding agent)
+│   ├── project/           ← Project plugin (project-onboarding agent)
+│   │   ├── plugin.json
+│   │   └── agents/project-onboarding.md
+│   └── vertx/             ← Vert.x plugin (3 skills, Java 7 EventBus)
 │       ├── plugin.json
-│       └── agents/project-onboarding.md
+│       ├── resources/api-reference/   ← API reference docs (shared by all vertx skills)
+│       └── skills/{skill-name}/
 ├── skills/                ← Legacy — 削除予定 (devops-pr-description: deprecated のみ残存)
 ├── agents/                ← Legacy — 削除予定 (skill-router: deprecated)
 ├── .claude-plugin/
@@ -162,6 +166,7 @@ Skills use a **category prefix** so Claude can identify their domain:
 | database | `database-` | `database-schema-doc` |
 | api-reference | `api-` | `api-openapi-gen` |
 | devops | `devops-` | `devops-dockerfile` |
+| vertx | `vertx-` | `vertx-eventbus-register` |
 
 ---
 
@@ -344,6 +349,7 @@ Skills across plugins are grouped into **teams** for coordinated execution. Team
 | `quality-team` | **Sequential** | Tests, comments, version check — run in order |
 | `commit-team` | **Sequential** | Git commit — final step |
 | `feature-team` | **Gated** | Requirements confirmed → design → implementation |
+| `eventbus-team` | **Sequential** | Vert.x EventBus: repo analysis → handler registration → API caller |
 
 ### How to Register a Skill into a Team
 
@@ -362,7 +368,7 @@ Add the skill name to the appropriate team in the plugin's `plugin.json`:
 ```
 
 **Rules:**
-- Only use team names from the defined list above — `make lint` will error on unknown names
+- Only use team names from the defined list above — `make lint` will error on unknown names (also update `KNOWN_TEAMS` in `scripts/lint-skills.py`)
 - Each skill can belong to **multiple teams**
 - Skills not yet ready for team use can be omitted from `teams:` entirely
 
@@ -436,5 +442,5 @@ SKILL.md:     version: v2.0
 
 ---
 
-*Last updated: 2026-02-23*
-*Project: Skill & Agent Factory v2.1 (3-tier skills + Agent Teams + Makefile)*
+*Last updated: 2026-02-25*
+*Project: Skill & Agent Factory v2.2 (3-tier skills + Agent Teams + Makefile + vertx plugin)*

@@ -1,0 +1,14 @@
+{
+  "name": "vertx",
+  "description": "Vert.x EventBus skills for Java 7 backend: repo analysis, endpoint registration, API calling",
+  "version": "1.0.0",
+  "skills": [
+    "vertx-repo-analyzer",
+    "vertx-eventbus-register",
+    "vertx-api-caller"
+  ],
+  "agents": [],
+  "teams": {
+    "eventbus-team": ["vertx-repo-analyzer", "vertx-eventbus-register", "vertx-api-caller"]
+  }
+}
