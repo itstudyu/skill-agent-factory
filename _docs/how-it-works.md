@@ -600,4 +600,98 @@ tools: Read, Task
 
 ---
 
-*Last updated: 2026-02-23 — plugins/ 구조, 3-tier, Agent Teams, Makefile, 자동화 반영*
+## 12. 설치 방법 (Usage Scope)
+
+| 방법 | 명령 | 적용 범위 |
+|------|------|---------|
+| `./install.sh` | `~/.claude/skills/` 에 심링크 생성 | **User-level** — 모든 프로젝트, git clone 후 1회 실행 |
+| Git submodule + `pluginDirs` | 프로젝트 내 embed | **Project-level** — repo에 번들, 팀 공유 가능 |
+| `--plugin-dir` flag | 세션/프로젝트에 직접 지정 | **Project-level** — embedding 없이 간단하게 로드 |
+
+**스킬/에이전트를 추가한 후에는 반드시 `./install.sh` 를 다시 실행하세요.**
+
+---
+
+## 13. 에셋 생성·업데이트 워크플로
+
+새 에셋(스킬/에이전트/플러그인)을 만들 때 따르는 순서:
+
+### Step 1 — 에셋 타입 분류
+
+| 타입 | 언제 |
+|------|------|
+| **Skill** | Claude가 자동 또는 on-demand로 반복 수행할 작업 |
+| **Agent** | 특정 도구와 워크플로를 가진 end-to-end 자율 작업 |
+| **Plugin** | 여러 스킬/에이전트/hooks의 묶음 — 프로젝트 간 공유 |
+| **Hook** | 라이프사이클 이벤트에서 결정론적으로 실행되는 명령 |
+| **MCP Server** | 외부 API·도구와의 통합 |
+
+### Step 2 — 레지스트리 중복 확인
+
+```
+1. registry.md 열기
+2. 유사한 에셋 검색
+3. 유사 존재 → 업데이트 제안, 사용자 확인 후 적용
+4. 신규 → 생성 진행
+```
+
+### Step 3 — 관련 _docs/ 파일 먼저 읽기
+
+| 만들 것 | 참조 파일 |
+|---------|---------|
+| Skill | `_docs/skills.md` |
+| Agent | `_docs/sub-agents.md` |
+| Plugin | `_docs/plugins.md` |
+| Hook | `_docs/hooks.md` |
+| MCP Server | `_docs/mcp.md` |
+| Agent Team | `_docs/agent-teams.md` |
+
+### Step 4 — 에셋 생성
+
+위 A~E 가이드(스킬/에이전트/플러그인/resources 추가) 참조.
+
+### Step 5 — 레지스트리 자동 동기화
+
+```bash
+make validate
+# lint + registry.md 자동 갱신 + README.md 자동 갱신
+```
+
+`metadata.md`의 의미있는 변경 시 버전 수동 bump: `v1.0 → v1.1`
+
+### Step 6 — install.sh 재실행 안내
+
+새 스킬/에이전트 추가 후 사용자에게 반드시 알리기:
+> "`./install.sh` 를 다시 실행해 주세요!"
+
+---
+
+## 14. 버저닝 전략
+
+모든 에셋(`metadata.md`, `SKILL.md`, agent 파일)은 `version:` 필드를 가집니다.
+
+### 버전 형식: `vMAJOR.MINOR`
+
+| 변경 종류 | 버전 올리기 | 예시 | 기준 |
+|---------|-----------|------|------|
+| Breaking — 이름 변경, 단계 삭제, 출력 형식 변경 | **MAJOR** | v1.0 → v2.0 | 기존 사용자가 적응 필요 |
+| Non-breaking — 새 단계 추가, 지침 개선, 태그 추가 | **MINOR** | v1.0 → v1.1 | 하위 호환 |
+| 오타/주석/포맷만 수정 | **없음** | v1.0 유지 | 동작 변화 없음 |
+
+### 작업 순서
+
+```
+1. 스킬/에이전트 내용 수정
+2. metadata.md (+ SKILL.md) 의 version: bump
+3. make validate  ← registry.md 자동 반영
+4. git commit -m "feat: devops-code-review v1.0 → v1.1"
+```
+
+### 개별 CHANGELOG 불필요
+
+`registry.md` 가 중앙 버전 원장 역할. `sync-registry.py` 실행 시 **Last Modified** 컬럼 자동 갱신.
+외부 공개 스킬이 아닌 한 `CHANGELOG.md` 개별 관리는 불필요.
+
+---
+
+*Last updated: 2026-02-25 — plugins/ 구조, 3-tier, Agent Teams, Makefile, 자동화, Usage Scope, Versioning, Workflow 반영*

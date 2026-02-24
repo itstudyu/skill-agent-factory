@@ -197,6 +197,56 @@ disprove each other's theories. Update the findings doc with consensus.
 
 ---
 
+## This Project — Defined Teams
+
+Teams declared in each `plugin.json` and validated by `make lint`.
+
+| Team | Execution | Members |
+|------|-----------|---------|
+| `review-team` | **Parallel** | devops-code-review, devops-arch-review, devops-safety-check |
+| `quality-team` | **Sequential** | devops-test-gen, devops-japanese-comments, devops-version-check |
+| `commit-team` | **Sequential** | devops-git-commit |
+| `feature-team` | **Gated** | devops-requirements → devops-frontend-review |
+| `eventbus-team` | **Sequential** | vertx-repo-analyzer → vertx-eventbus-register → vertx-api-caller |
+
+### How to Register a Skill into a Team
+
+Add the skill to the appropriate team in `plugin.json`:
+
+```json
+{
+  "name": "backend",
+  "teams": {
+    "review-team":  ["backend-code-review"],
+    "quality-team": ["backend-test-gen"]
+  }
+}
+```
+
+**Rules:**
+- Only use team names from the defined table above
+- New team name → add to table above + `KNOWN_TEAMS` in `scripts/lint-skills.py`
+- Each skill can belong to multiple teams
+- Skills not ready for team use can be omitted from `teams:` entirely
+
+### Scaling Rule
+
+> Declare `teams:` membership in `plugin.json` **before** creating skill files.
+> This keeps team composition visible and auditable from one place.
+
+### Future: Team Orchestrators (implement when ≥ 3 plugins join same team)
+
+```
+plugins/teams/agents/
+├── review-team.md    ← parallel execution via Task tool
+├── quality-team.md   ← sequential with gate checks
+└── feature-team.md   ← requirements gate before proceeding
+```
+
+Until then, `devops-pipeline` handles full-pipeline orchestration.
+
+---
+
 ## Best Practices
 
 - Give teammates enough context in the spawn prompt

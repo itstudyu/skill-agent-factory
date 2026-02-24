@@ -183,3 +183,43 @@ Research $ARGUMENTS thoroughly:
 - Use `disable-model-invocation: true` for workflows with side effects
 - Use `allowed-tools` to restrict tool access for safety
 - Test with `/skill-name` invocation before deploying
+
+---
+
+## Skill Naming Convention (This Project)
+
+Skills use a **category prefix** so Claude can identify their domain at a glance:
+
+| Category | Prefix | Example |
+|----------|--------|---------|
+| backend | `backend-` | `backend-code-review` |
+| frontend | `frontend-` | `frontend-component-gen` |
+| database | `database-` | `database-schema-doc` |
+| api-reference | `api-` | `api-openapi-gen` |
+| devops | `devops-` | `devops-dockerfile` |
+| vertx | `vertx-` | `vertx-eventbus-register` |
+
+Adding a new category → also add a row here and in `CLAUDE.md` Active Teams section.
+
+---
+
+## Quality Checklist
+
+### metadata.md must have:
+- `name` — matches folder name exactly
+- `category` — plugin category (`devops` / `figma` / `vertx` / …)
+- `tags` — precise routing tags (domain + action). Example: `[devops, review, code, quality]`
+- `model` — `haiku` (fast/simple) or `sonnet` (complex analysis)
+- `use-when` — trigger keywords in KO + EN + JA. Keep under 15 lines total.
+- `allowed-tools` — tools the skill needs
+
+### SKILL.md must have:
+- `name`, `description` with trigger keywords in frontmatter
+- Step-by-step instructions Claude will follow
+- Output format section
+- Keep under 500 lines; move details to `resources/`
+
+### All assets:
+- Written in **English**
+- Start at **v1.0**, increment on meaningful updates
+- Run `make validate` after creation — no errors allowed before merging
