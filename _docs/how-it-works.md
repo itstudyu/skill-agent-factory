@@ -38,12 +38,13 @@ pipeline      (에이전트)      onboarding
 | `figma-to-code` | Figma → 프로덕션 코드 변환 | opus | figma |
 | `project-onboarding` | 프로젝트 최초 1회 초기화 | sonnet | project |
 
-**스킬 15개 (2개 플러그인)**
+**스킬 18개 (3개 플러그인)**
 
 | 플러그인 | 스킬 |
 |---------|------|
 | devops (10개) | requirements, safety-check, code-review, arch-review, japanese-comments, frontend-review, version-check, test-gen, git-commit, skill-eval |
 | figma (5개) | design-token-extractor, framework-figma-mapper, design-analyzer, code-sync, responsive-validator |
+| vertx (3개) | vertx-repo-analyzer, vertx-eventbus-register, vertx-api-caller |
 
 ---
 
@@ -359,7 +360,7 @@ python3 scripts/dep-graph.py --check            # 문제 있는 의존 관계만
 
 ```
 skill-agent-factory/
-├── CLAUDE.md              ← Master instructions + 라우팅 규칙
+├── CLAUDE.md              ← 포인터 파일 + 라우팅 규칙 (상세는 _docs/ 참조)
 ├── README.md              ← 자동 업데이트 (make sync)
 ├── Makefile               ← Dev commands
 ├── registry.md            ← 자동 업데이트 (make sync)
@@ -376,9 +377,13 @@ skill-agent-factory/
 │   │   ├── plugin.json
 │   │   ├── agents/figma-to-code.md
 │   │   └── skills/{name}/
-│   └── project/
+│   ├── project/
+│   │   ├── plugin.json
+│   │   └── agents/project-onboarding.md
+│   └── vertx/
 │       ├── plugin.json
-│       └── agents/project-onboarding.md
+│       ├── resources/api-reference/   ← API docs (공유 리소스)
+│       └── skills/{name}/
 ├── scripts/
 │   ├── sync-registry.py   ← registry.md + README.md 자동 갱신
 │   ├── lint-skills.py     ← 품질 검사 (frontmatter, teams, deps)
