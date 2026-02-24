@@ -62,10 +62,10 @@ Grep: "eventBus\.publish\(" → ブロードキャスト箇所
 
 ## STEP 4: API リファレンスとの照合
 
-`plugins/vertx/resources/api-reference/` のドキュメントと現状の実装を照合する。
+`plugins/vertx/resources/api-reference.md` のドキュメントと現状の実装を照合する。
 
 ```
-Read: plugins/vertx/resources/api-reference/README.md
+Read: plugins/vertx/resources/api-reference.md
 ```
 
 ドキュメント化されていないエンドポイントがあれば、その旨を報告する。

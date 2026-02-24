@@ -382,7 +382,11 @@ skill-agent-factory/
 │   │   └── agents/project-onboarding.md
 │   └── vertx/
 │       ├── plugin.json
-│       ├── resources/api-reference/   ← API docs (공유 리소스)
+│       ├── resources/
+│       │   ├── api-reference.md   ← 엔드포인트 계약서 (address/request/response 전체)
+│       │   ├── data-api.md        ← 데이터 처리 모듈
+│       │   ├── filter-api.md      ← 필터 처리 모듈
+│       │   └── {category}-api.md  ← 추가 예정 (email 등)
 │       └── skills/{name}/
 ├── scripts/
 │   ├── sync-registry.py   ← registry.md + README.md 자동 갱신

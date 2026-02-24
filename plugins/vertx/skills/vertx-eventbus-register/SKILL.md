@@ -159,8 +159,9 @@ container.deployVerticle("{パッケージ}.{ModuleName}Verticle", new AsyncResu
 
 ## STEP 6: API リファレンスへの記載
 
-新しいエンドポイントを追加したら `plugins/vertx/resources/api-reference/` に記載する:
+新しいエンドポイントを追加したら以下の 2 ファイルに記載する:
 
+**① `plugins/vertx/resources/api-reference.md`** — エンドポイント契約書に追記:
 ```markdown
 ## {エンドポイント名}
 
@@ -168,10 +169,11 @@ container.deployVerticle("{パッケージ}.{ModuleName}Verticle", new AsyncResu
 - **Request**: `{ field: type, ... }`
 - **Response**: `{ field: type, ... }`
 - **説明**: 何をするか
-- **Verticle**: {VerticleName}
+- **処理モジュール**: data-api / filter-api / notice-api / env-api / async-api
 ```
 
-適切な api ファイル（data-api.md / filter-api.md / notice-api.md / env-api.md / async-api.md）に追記する。
+**② `plugins/vertx/resources/{category}-api.md`** — 処理モジュールの実装詳細に追記。
+適切なファイル（data-api.md / filter-api.md / notice-api.md / env-api.md / async-api.md）に追記する。
 
 ---
 
@@ -190,5 +192,5 @@ container.deployVerticle("{パッケージ}.{ModuleName}Verticle", new AsyncResu
 
 ### 次のアクション
 - フロントから呼び出す場合: vertx-api-caller を使用
-- API ドキュメント更新: plugins/vertx/resources/api-reference/{category}-api.md に追記済み / 要追記
+- API ドキュメント更新: api-reference.md + {category}-api.md に追記済み / 要追記
 ```

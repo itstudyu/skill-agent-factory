@@ -125,10 +125,15 @@ function call{EndpointName}WithTimeout(params, callback) {
 
 ## STEP 4: API リファレンスとの照合
 
-呼び出し前に `plugins/vertx/resources/api-reference/` でエンドポイント仕様を確認:
+呼び出し前に `plugins/vertx/resources/api-reference.md` でエンドポイント仕様を確認:
 
 ```
-Read: plugins/vertx/resources/api-reference/{category}-api.md
+Read: plugins/vertx/resources/api-reference.md
+```
+
+address が確認できたら、処理モジュール詳細も必要に応じて参照:
+```
+Read: plugins/vertx/resources/{category}-api.md
 ```
 
 - リクエストフィールドの型・必須/任意を確認

@@ -50,13 +50,13 @@ skill-agent-factory/
 └── plugins/vertx/
     ├── plugin.json
     ├── resources/
-    │   └── api-reference/
-    │       ├── README.md
-    │       ├── data-api.md    ← データ取得・更新系
-    │       ├── filter-api.md  ← 検索・フィルタリング系
-    │       ├── notice-api.md  ← 通知・アナウンス系
-    │       ├── env-api.md     ← 環境設定・マスタデータ系
-    │       └── async-api.md   ← 非同期処理系
+    │   ├── api-reference.md   ← エンドポイント契約書 (address / request / response)
+    │   ├── data-api.md        ← データ取得・登録・更新・削除
+    │   ├── filter-api.md      ← 検索・フィルタリング
+    │   ├── notice-api.md      ← 通知・アナウンス
+    │   ├── env-api.md         ← 環境設定・マスタデータ
+    │   ├── async-api.md       ← 非同期処理
+    │   └── email-api.md       ← メール送信 *(追加予定)*
     └── skills/
         ├── vertx-repo-analyzer/    (metadata.md + SKILL.md)
         ├── vertx-eventbus-register/
@@ -79,13 +79,15 @@ skill-agent-factory/
 例: `user.get.list`, `order.create`, `notification.send.all`
 
 ### API ドキュメント:
-新しいエンドポイントを追加したら `plugins/vertx/resources/api-reference/` の該当ファイルに必ず記載する。
+新しいエンドポイントを追加したら以下の 2 ファイルに必ず記載する:
+- `plugins/vertx/resources/api-reference.md` — エンドポイント契約書 (address / request / response)
+- `plugins/vertx/resources/{category}-api.md` — 処理モジュール詳細 (data / filter / notice / env / async / email…)
 
 ---
 
 ## Related Docs
 - `../../_docs/skills.md` — Skill format reference
-- `../../plugins/vertx/resources/api-reference/README.md` — API リファレンス
+- `../../plugins/vertx/resources/api-reference.md` — API リファレンス (エンドポイント契約書)
 - `../../registry.md` — All assets registry
 
 *Category: vertx | Last updated: 2026-02-25*
