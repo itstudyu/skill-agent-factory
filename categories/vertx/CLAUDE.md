@@ -50,18 +50,27 @@ skill-agent-factory/
 └── plugins/vertx/
     ├── plugin.json
     ├── resources/
-    │   ├── api-reference.md   ← エンドポイント契約書 (address / request / response)
-    │   ├── data-api.md        ← データ取得・登録・更新・削除
-    │   ├── filter-api.md      ← 検索・フィルタリング
-    │   ├── notice-api.md      ← 通知・アナウンス
-    │   ├── env-api.md         ← 環境設定・マスタデータ
-    │   ├── async-api.md       ← 非同期処理
-    │   └── email-api.md       ← メール送信 *(追加予定)*
+    │   ├── api-reference.md        ← エンドポイント契約書 (address / request / response 一覧)
+    │   ├── data-api/               ← データ取得・登録・更新・削除 (README + 8ファイル)
+    │   ├── filter-api/             ← 検索・フィルタリング
+    │   ├── insert-api/             ← 一括データ挿入
+    │   ├── employee-api/           ← 社員情報管理
+    │   ├── organ-api/              ← 組織・役職情報
+    │   ├── schema-api/             ← テーブルスキーマ参照
+    │   ├── notice-api/             ← 通知配信 (メール/SMS)
+    │   ├── sms-api/                ← SMS送信
+    │   ├── file-api/               ← ファイル操作
+    │   ├── env-api/                ← 環境設定・モジュール設定
+    │   ├── async-api/              ← 非同期ジョブ
+    │   └── image/                  ← ドキュメント用画像
     └── skills/
         ├── vertx-repo-analyzer/    (metadata.md + SKILL.md)
         ├── vertx-eventbus-register/
         └── vertx-api-caller/
 ```
+
+各処理モジュールフォルダの構成: `00-quick-start.md` (概要・判断ツリー) + `01-*-template.md` (実装テンプレート)。
+data-api/ は最も成熟: README.md + GET/PUT/DELETE/chaining/error-handling/status-codes 別に分割。
 
 ---
 
@@ -79,15 +88,16 @@ skill-agent-factory/
 例: `user.get.list`, `order.create`, `notification.send.all`
 
 ### API ドキュメント:
-新しいエンドポイントを追加したら以下の 2 ファイルに必ず記載する:
-- `plugins/vertx/resources/api-reference.md` — エンドポイント契約書 (address / request / response)
-- `plugins/vertx/resources/{category}-api.md` — 処理モジュール詳細 (data / filter / notice / env / async / email…)
+新しいエンドポイントを追加したら以下の 2 箇所に必ず記載する:
+- `plugins/vertx/resources/api-reference.md` — エンドポイント契約書 (address / request / response 一覧)
+- `plugins/vertx/resources/{category}-api/` — 該当する処理モジュールフォルダのテンプレートに追記
 
 ---
 
 ## Related Docs
 - `../../_docs/skills.md` — Skill format reference
-- `../../plugins/vertx/resources/api-reference.md` — API リファレンス (エンドポイント契約書)
+- `../../plugins/vertx/resources/api-reference.md` — エンドポイント契約書 (address / request / response 一覧)
+- `../../plugins/vertx/resources/{category}-api/00-quick-start.md` — 各処理モジュールの基本パターン
 - `../../registry.md` — All assets registry
 
-*Category: vertx | Last updated: 2026-02-25*
+*Category: vertx | Last updated: 2026-02-26*

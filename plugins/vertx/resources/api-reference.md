@@ -1,46 +1,68 @@
-# Vert.x EventBus API Reference
+# API Reference — エンドポイント契約書
 
-> このファイルは全エンドポイントの契約書です。
-> フロントエンドはここを見て address / request / response を確認してから呼び出しを実装してください。
+> **FOR AI**: フロントエンドから呼び出す address / request / response の一覧。
+> 各処理モジュールの実装詳細は `{category}-api/` フォルダを参照。
 
 ---
-
-## 記述形式
-
-```markdown
-## エンドポイント名
-
-- **Address**: `module.action.resource`
-- **Request**: `{ field: type, ... }`
-- **Response**: `{ status: "ok"|"error", ... }`
-- **説明**: 何をするか
-- **処理モジュール**: data-api / filter-api / notice-api / env-api / async-api
-```
 
 ## 処理モジュール一覧
 
-| ファイル | 担当 |
-|---------|------|
-| `data-api.md` | データ取得・登録・更新・削除 |
-| `filter-api.md` | 検索・フィルタリング |
-| `notice-api.md` | 通知・アナウンス送信 |
-| `env-api.md` | 環境設定・マスタデータ |
-| `async-api.md` | 非同期処理・バックグラウンドジョブ |
-| `email-api.md` | メール送信・テンプレート管理 *(追加予定)* |
+| モジュール | DataAccess メソッド | Callback | 概要 | ドキュメント |
+|-----------|--------------------|---------|----|-------------|
+| data-api | `getDataAPI()` `putDataAPI()` `deleteDataAPI()` | CallBack, CallBackGet, CallBackPut, CallBackDelete | CRUD 操作 (最も頻用) | `data-api/` (README + 8ファイル) |
+| filter-api | `getFilterAPI()` | CallBackGet | フィルタリング・検索 | `filter-api/` |
+| insert-api | `postInsertAPI()` | CallBack | 一括データ挿入 | `insert-api/` |
+| employee-api | `getEmployeeAPI()` `putEmployeeAPI()` | CallBackGet, CallBackPut | 社員番号管理・バリデーション | `employee-api/` |
+| organ-api | `getOrganAPI()` | CallBackGet | 組織・役職情報取得 | `organ-api/` |
+| schema-api | `getSchemaAPI()` | CallBack | テーブルスキーマ参照 | `schema-api/` |
+| notice-api | `postNoticeAPI()` | CallBack | 通知配信 (メール + SMS) | `notice-api/` |
+| sms-api | `postSMSAPI()` | CallBack | SMS 送信 | `sms-api/` |
+| file-api | `getFileIdAPI()` `getFileAPI()` `putFileAPIPersist()` `deleteFileAPI()` | CallBackGet, CallBack | ファイル操作 (upload/download/persist/delete) | `file-api/` |
+| env-api | `getEnvAPI()` | CallBackEnv | 環境設定・モジュール設定 | `env-api/` |
+| async-api | `postAsyncAPI()` `getAsyncAPI()` | CallBackAsync | 非同期ジョブ (POST で開始, GET で状態確認) | `async-api/` |
 
 ---
 
-## エンドポイント一覧
+## 使い方
 
-> 🚧 **準備中** — 実際のエンドポイントをここに追加してください。
+### スキルからの参照フロー
 
-<!-- ここにエンドポイントを追加 -->
-<!-- 例:
-## ユーザー一覧取得
+```
+1. このファイルで対象 API のメソッド・Callback を確認
+2. 該当フォルダの 00-quick-start.md で基本パターンを確認
+3. 01-*-template.md で実装テンプレートをコピー
+```
 
-- **Address**: `user.get.list`
-- **Request**: `{ page: number, size: number }`
-- **Response**: `{ status: "ok", data: [{ id, name, ... }], total: number }`
-- **説明**: ページネーション付きでユーザー一覧を取得する
-- **処理モジュール**: data-api
--->
+### 新しいエンドポイント追加時
+
+このファイルの上記テーブルに行を追加し、該当フォルダのテンプレートに実装例を追記する。
+
+---
+
+## 共通パターン
+
+### リクエスト基本構造
+```
+DataAccess メソッド(パラメータ文字列, CallBack インスタンス)
+```
+- パラメータ: `"TABLE_NAME/{platformID}/{key}"` 形式
+- クエリパラメータ: `"?_lang=ja&_limit=100"` を末尾に付与
+
+### レスポンス共通フィールド
+- `code` — HTTP ステータスコード (200, 404, 500 等)
+- `responseData` — JsonObject のレスポンス本体
+- `th` — 例外 (正常時は null)
+
+### Callback パターン
+| Callback | 用途 |
+|---------|------|
+| `CallBack` | 汎用 (code, JsonObject, Throwable) |
+| `CallBackGet` | GET 応答用 (code, JsonObject, Throwable) |
+| `CallBackPut` | PUT 応答用 (code, JsonObject, Throwable) |
+| `CallBackDelete` | DELETE 応答用 (code, JsonObject, Throwable) |
+| `CallBackEnv` | 環境設定 API 専用 |
+| `CallBackAsync` | 非同期ジョブ API 専用 |
+
+---
+
+*Last updated: 2026-02-26*
