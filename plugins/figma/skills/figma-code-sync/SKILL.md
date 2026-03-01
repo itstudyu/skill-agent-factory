@@ -3,7 +3,7 @@ name: figma-code-sync
 version: v1.0
 description: Verifies that the implemented code matches the Figma design mapping. Use when you want to validate the implementation against the Figma design, check for missing components, style mismatches, or gaps between the design mapping and the actual code. Triggers on requests like "check if the implementation matches Figma", "validate design sync", "figma code sync", or "verify design implementation".
 tags: [figma, sync, verify, design-match, implementation]
-requires: [figma-framework-figma-mapper]
+requires: [figma-framework-figma-mapper, figma-design-token-extractor]
 allowed-tools: Read, Grep, Glob, mcp__figma__get_file, mcp__figma__get_node
 ---
 

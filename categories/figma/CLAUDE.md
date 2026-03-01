@@ -30,6 +30,8 @@
 | `figma-responsive-validator` | 生成コードのレスポンシブ対応を検証 (Mobile/Tablet/Desktop) | コーディング後 |
 | `figma-code-sync` | マッピングと実装の一致を検証 → 同期スコア (0–100%) | コーディング後 |
 
+> **注:** 全スキルおよびエージェントは `plugins/figma/` に実装済み。
+
 ### エージェント
 
 | エージェント | モデル | 役割 |
@@ -86,4 +88,4 @@
 - `../../_docs/sub-agents.md` — Agent format reference
 - `../../registry.md` — All assets registry
 
-*Category: figma | Last updated: 2026-02-21*
+*Category: figma | Last updated: 2026-03-01*

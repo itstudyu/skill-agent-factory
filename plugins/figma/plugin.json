@@ -1,17 +1,19 @@
 {
   "name": "figma",
-  "description": "Figma-to-code skills: design analysis, token extraction, component mapping, responsive validation",
-  "version": "1.0.0",
+  "description": "Figma-to-code skills: project context, design analysis, token extraction, component mapping, inventory, responsive validation, code sync",
+  "version": "1.1.0",
   "skills": [
+    "figma-project-context",
     "figma-code-sync",
+    "figma-component-inventory",
     "figma-design-analyzer",
     "figma-design-token-extractor",
     "figma-framework-figma-mapper",
     "figma-responsive-validator"
   ],
-  "agents": ["figma-to-code"],
+  "agents": ["figma-to-code", "figma-designer"],
   "teams": {
     "review-team":  ["figma-responsive-validator"],
-    "feature-team": ["figma-design-analyzer", "figma-design-token-extractor", "figma-framework-figma-mapper", "figma-code-sync"]
+    "feature-team": ["figma-project-context", "figma-design-analyzer", "figma-design-token-extractor", "figma-framework-figma-mapper", "figma-component-inventory", "figma-code-sync"]
   }
 }

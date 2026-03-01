@@ -38,6 +38,18 @@ If not specified, ask:
 
 ---
 
+## Phase 1.5 — Project Context
+
+### 1.5: Run figma-project-context
+```
+IF context.md does not exist in project root or docs/:
+  → Run figma-project-context skill
+  → Generate context.md with framework, CSS approach, conventions
+  → This context is consumed by all Phase 2 skills
+```
+
+---
+
 ## Phase 2 — Design Analysis (requires: 順序に従って実行)
 
 **実行前に各スキルの SKILL.md frontmatter の `requires:` フィールドを確認して実行順序を決定する。**
@@ -204,4 +216,4 @@ After code generation and Figma validation:
 
 ---
 
-*Agent: figma-to-code | Category: figma | Model: opus | Version: v1.0 | Last updated: 2026-02-21*
+*Agent: figma-to-code | Category: figma | Model: opus | Version: v1.1 | Last updated: 2026-03-01*

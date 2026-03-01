@@ -252,43 +252,10 @@ DashboardPage
 
 Save `implementation-blueprint.md` to the project root or a `docs/` folder.
 
-Include all screenshots inline:
-
-```markdown
-# Implementation Blueprint: {ScreenName}
-
-## Overview
-- Design: {FigmaFrameName}
-- Framework: {framework}
-- Layout: {layoutType}
-- Total components: {total} ({frameworkCount} framework, {customCount} custom)
-
-## Screenshots
-| Screen | File |
-|--------|------|
-| Full page | screenshots/{name}-full.png |
-| Header | screenshots/{name}-header.png |
-...
-
-## Page Structure
-{ASCII diagram}
-
-## Section Breakdown
-{per section JSON + screenshot}
-
-## Component Recommendations
-{table}
-
-## Custom Components
-{table}
-
-## Build Order
-{table}
-
-## Responsive Plan
-{table}
-```
+> **Template:** Load `resources/blueprint-template.md` for the output structure.
+> Fill each section with the data collected in Phases 1–4.
+> Include all screenshots inline with relative paths to `screenshots/` directory.
 
 ---
 
-*Skill: figma-design-analyzer | Category: figma | Version: v1.0 | Last updated: 2026-02-21*
+*Skill: figma-design-analyzer | Category: figma | Version: v1.0 | Last updated: 2026-03-01*
