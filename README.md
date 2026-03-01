@@ -70,7 +70,7 @@ Skills across plugins are grouped into **teams** for coordinated execution. Team
 |------|-----------|---------|
 | `commit-team` | **Sequential** | devops-git-commit |
 | `eventbus-team` | **Sequential** | vertx-repo-analyzer, vertx-eventbus-register, vertx-api-caller |
-| `feature-team` | **Gated** | devops-requirements, devops-frontend-review, figma-design-analyzer, figma-design-token-extractor, figma-framework-figma-mapper, figma-code-sync, figma-project-context, figma-component-inventory |
+| `feature-team` | **Gated** | devops-requirements, devops-frontend-review, figma-project-context, figma-design-analyzer, figma-design-token-extractor, figma-framework-figma-mapper, figma-component-inventory, figma-code-sync |
 | `quality-team` | **Sequential** | devops-test-gen, devops-japanese-comments, devops-version-check |
 | `review-team` | **Parallel** | devops-code-review, devops-arch-review, devops-safety-check, figma-responsive-validator |
 <!-- TEAMS_TABLE_END -->
@@ -197,7 +197,7 @@ claude --plugin-dir ~/path/to/skill-agent-factory
 |-------|-------|------|---------|
 | `devops-arch-review` | sonnet | `review`, `architecture`, `structure`, `standards`, `naming`, `patterns` | User asks to check code structure, folder layout, naming conventions, error hand |
 | `devops-code-review` | sonnet | `review`, `code`, `quality`, `bugs`, `logic`, `performance` | Run after code is written. User asks to review code, check for bugs, logic error |
-| `devops-frontend-review` | sonnet | `review`, `frontend`, `ui`, `pixel-perfect`, `screenshot`, `design-match` | Run after frontend code is written. User provides a screenshot, image, or Figma  |
+| `devops-frontend-review` | sonnet | `review`, `frontend`, `ui`, `pixel-perfect`, `screenshot`, `design-match` | Run after frontend code is written as part of devops-pipeline. User provides a s |
 | `devops-git-commit` | haiku | `git`, `commit`, `branch`, `version-control` | Run at the END of every development task. User wants to commit code, create a br |
 | `devops-japanese-comments` | haiku | `japanese`, `comments`, `logs`, `localization`, `i18n` | Run after code review. User wants to enforce Japanese in comments/logs, convert  |
 | `devops-requirements` | sonnet | `requirements`, `planning`, `spec`, `feature`, `analysis` | Run at the START of every development request, before writing any code. User wan |
@@ -211,12 +211,20 @@ claude --plugin-dir ~/path/to/skill-agent-factory
 | Skill | Model | Tags | Purpose |
 |-------|-------|------|---------|
 | `figma-code-sync` | sonnet | `figma`, `sync`, `verify`, `design-match`, `implementation`, `validate` | User wants to validate that implemented code matches the Figma design, check for |
-| `figma-component-inventory` | sonnet | `figma`, `component`, `inventory`, `catalog`, `scan`, `audit`, `gap-analysis` | Scan and catalog all Figma components, perform gap analysis against codebase |
+| `figma-component-inventory` | sonnet | `figma`, `component`, `inventory`, `catalog`, `scan`, `audit`, `gap-analysis` | User wants to scan and catalog all components in a Figma file, perform a gap ana |
 | `figma-design-analyzer` | sonnet | `figma`, `design`, `analyze`, `blueprint`, `frontend`, `planning`, `implementation-plan` | Before coding begins. User wants to analyze a Figma design and produce a fronten |
 | `figma-design-token-extractor` | sonnet | `figma`, `design-token`, `colors`, `typography`, `css`, `scss`, `extract` | User wants to extract design tokens from Figma (colors, fonts, spacing, shadows) |
 | `figma-framework-figma-mapper` | sonnet | `figma`, `framework`, `component`, `mapping`, `ui-kit`, `primefaces` | User wants to map UI framework components (PrimeFaces, custom) to Figma design c |
-| `figma-project-context` | sonnet | `figma`, `project`, `context`, `setup`, `framework`, `convention`, `init` | Analyze project structure and generate context.md consumed by downstream Figma s |
+| `figma-project-context` | sonnet | `figma`, `project`, `context`, `setup`, `framework`, `convention`, `init` | Before any Figma-to-code workflow begins. User wants to analyze the project stru |
 | `figma-responsive-validator` | sonnet | `figma`, `responsive`, `validate`, `mobile`, `layout`, `breakpoint`, `tablet` | User wants to validate responsive design across Mobile, Tablet, Desktop breakpoi |
+
+### Pm Plugin Skills
+
+| Skill | Model | Tags | Purpose |
+|-------|-------|------|---------|
+| `pm-confidence-check` | sonnet | `pm`, `confidence`, `pre-check`, `assessment`, `quality-gate` | Run BEFORE starting any implementation. Assesses confidence level to prevent wro |
+| `pm-reflexion` | sonnet | `pm`, `reflexion`, `error-learning`, `mistake`, `prevention`, `pdca` | Run when errors occur or after mistake detection. Records errors with root cause |
+| `pm-self-check` | sonnet | `pm`, `self-check`, `validation`, `post-check`, `evidence`, `hallucination` | Run AFTER implementation is complete. Validates work with evidence-based checks  |
 
 ### Vertx Plugin Skills
 
@@ -231,10 +239,11 @@ claude --plugin-dir ~/path/to/skill-agent-factory
 | Agent | Plugin | Model | Purpose |
 |-------|--------|-------|---------|
 | `devops-pipeline` | devops | sonnet | Development pipeline orchestrator. Automatically invoked by CLAUDE.md for all de |
-| `figma-designer` | figma | opus | Talk to Figma MCP agent to create new designs following design system |
+| `figma-designer` | figma | opus | Creates new Figma designs using the Talk to Figma MCP. Reads project context and |
 | `figma-to-code` | figma | opus | Converts Figma designs into production-ready frontend code. Use proactively when |
+| `pm-pipeline` | pm | sonnet | PM (Project Management) pipeline orchestrator. Wraps around the devops-pipeline  |
 | `project-onboarding` | project | sonnet | Project onboarding agent. Auto-detects existing vs new projects, analyzes code p |
-| `vertx-pipeline` | vertx | sonnet | Vert.x EventBus development pipeline orchestrator. Runs eventbus-team in sequenc |
+| `vertx-pipeline` | vertx | sonnet | Vert.x EventBus development pipeline orchestrator. Runs the eventbus-team in seq |
 
 
 ## Adding a New Skill

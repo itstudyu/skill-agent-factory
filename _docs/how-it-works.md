@@ -30,23 +30,29 @@ pipeline      (에이전트)      onboarding
     └── feature-team  (게이트)
 ```
 
-**에이전트 5개**
+<!-- SYNC:AGENT_SUMMARY_START -->
+**에이전트 6개**
 
 | 에이전트 | 역할 | 모델 | 플러그인 |
 |---------|------|------|---------|
-| `devops-pipeline` | 개발 파이프라인 오케스트레이터 | sonnet | devops |
-| `figma-to-code` | Figma → 프로덕션 코드 변환 | opus | figma |
-| `figma-designer` | Figma MCP로 새 디자인 생성 | opus | figma |
-| `project-onboarding` | 프로젝트 최초 1회 초기화 | sonnet | project |
-| `vertx-pipeline` | EventBus 개발 파이프라인 오케스트레이터 | sonnet | vertx |
+| `devops-pipeline` | Development pipeline orchestrator. Au... | sonnet | devops |
+| `figma-designer` | Creates new Figma designs using the T... | opus | figma |
+| `figma-to-code` | Converts Figma designs into productio... | opus | figma |
+| `pm-pipeline` | PM (Project Management) pipeline orch... | sonnet | pm |
+| `project-onboarding` | Project onboarding agent. Auto-detect... | sonnet | project |
+| `vertx-pipeline` | Vert.x EventBus development pipeline ... | sonnet | vertx |
+<!-- SYNC:AGENT_SUMMARY_END -->
 
-**스킬 20개 (3개 플러그인)**
+<!-- SYNC:SKILL_SUMMARY_START -->
+**스킬 23개 (4개 플러그인)**
 
 | 플러그인 | 스킬 |
 |---------|------|
-| devops (10개) | requirements, safety-check, code-review, arch-review, japanese-comments, frontend-review, version-check, test-gen, git-commit, skill-eval |
-| figma (7개) | project-context, component-inventory, design-token-extractor, framework-figma-mapper, design-analyzer, code-sync, responsive-validator |
-| vertx (3개) | vertx-repo-analyzer, vertx-eventbus-register, vertx-api-caller |
+| devops (10개) | arch-review, code-review, frontend-review, git-commit, japanese-comments, requirements, safety-check, skill-eval, test-gen, version-check |
+| figma (7개) | code-sync, component-inventory, design-analyzer, design-token-extractor, framework-figma-mapper, project-context, responsive-validator |
+| pm (3개) | confidence-check, reflexion, self-check |
+| vertx (3개) | api-caller, eventbus-register, repo-analyzer |
+<!-- SYNC:SKILL_SUMMARY_END -->
 
 ---
 
@@ -206,15 +212,19 @@ STEP_COMMIT     → 반드시 사용자 확인 후 커밋 (feature/{번호}/{이
 
 스킬들은 **팀** 단위로 그룹화되어 조율 실행됩니다. 팀 멤버십은 각 `plugin.json`에 선언됩니다.
 
+<!-- SYNC:TEAM_COUNT_START -->
 ### 5가지 팀
+<!-- SYNC:TEAM_COUNT_END -->
 
+<!-- SYNC:TEAM_TABLE_START -->
 | 팀 | 실행 방식 | 용도 |
 |----|---------|------|
-| `review-team` | **Parallel** (병렬) | 코드 품질 다각도 검토 |
-| `quality-team` | **Sequential** (순차) | 테스트/일본어/버전 체크 |
 | `commit-team` | **Sequential** (순차) | 커밋 처리 |
-| `feature-team` | **Gated** (게이트) | 기능 개발 전 요건/설계 확인 |
 | `eventbus-team` | **Sequential** (순차) | Vert.x: repo-analyze → register → api-caller |
+| `feature-team` | **Gated** (게이트) | 기능 개발 전 요건/설계 확인 |
+| `quality-team` | **Sequential** (순차) | 테스트/일본어/버전 체크 |
+| `review-team` | **Parallel** (병렬) | 코드 품질 다각도 검토 |
+<!-- SYNC:TEAM_TABLE_END -->
 
 ### plugin.json 선언 방식
 
@@ -309,6 +319,13 @@ README.md
   ├── ## Current Skills & Agents ← 플러그인별 스킬/에이전트 테이블
   └── ## Agent Teams             ← plugin.json teams: 집약 테이블
       (<!-- TEAMS_TABLE_START/END --> 마커 사이 자동 교체)
+
+_docs/how-it-works.md
+  ├── AGENT_SUMMARY  ← 에이전트 수 + 테이블
+  ├── SKILL_SUMMARY  ← 스킬 수 + 플러그인별 목록
+  ├── TEAM_COUNT     ← 팀 수 헤딩
+  └── TEAM_TABLE     ← 팀 테이블
+      (<!-- SYNC:XXX_START/END --> 마커 사이 자동 교체)
 ```
 
 ### lint-skills.py 검사 항목

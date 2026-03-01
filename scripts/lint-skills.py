@@ -257,7 +257,25 @@ def check_agent(agent_file: Path, all_skill_names: set) -> tuple[int, int]:
 
 MAX_DEP_DEPTH = 3  # これ以上深い依存チェーンは警告
 
-KNOWN_TEAMS = {"review-team", "quality-team", "commit-team", "feature-team", "eventbus-team"}
+def _discover_known_teams() -> set[str]:
+    """plugin.json の teams: キーから既知チーム名を自動収集"""
+    teams = set()
+    if PLUGINS_DIR.exists():
+        for plugin_dir in sorted(PLUGINS_DIR.iterdir()):
+            if not plugin_dir.is_dir():
+                continue
+            pjson = plugin_dir / "plugin.json"
+            if not pjson.exists():
+                continue
+            try:
+                data = json.loads(pjson.read_text(encoding="utf-8"))
+            except json.JSONDecodeError:
+                continue
+            teams.update(data.get("teams", {}).keys())
+    return teams
+
+
+KNOWN_TEAMS = _discover_known_teams()
 
 
 def check_teams(all_skill_names: set) -> tuple[int, int]:

@@ -15,7 +15,7 @@ SHELL := /bin/bash
 PYTHON := python3
 SCRIPTS := scripts
 
-.PHONY: install lint lint-strict sync graph check validate help
+.PHONY: install lint lint-strict sync graph check validate hook-install help
 
 # ── インストール ────────────────────────────────────────────
 install:
@@ -45,6 +45,12 @@ validate: lint sync check
 	@echo ""
 	@echo "✅  validate complete"
 
+# ── Pre-commit Hook ──────────────────────────────────────
+hook-install:
+	@cp .claude/hooks/pre-commit-validate.sh .git/hooks/pre-commit
+	@chmod +x .git/hooks/pre-commit
+	@echo "✅  pre-commit hook installed"
+
 # ── ヘルプ ─────────────────────────────────────────────────
 help:
 	@echo ""
@@ -57,5 +63,6 @@ help:
 	@echo "  make graph        Show full dependency tree"
 	@echo "  make check        Check dependency issues only"
 	@echo "  make validate     Run lint + sync + check"
+	@echo "  make hook-install Install pre-commit hook (runs validate)"
 	@echo "  make help         Show this message"
 	@echo ""

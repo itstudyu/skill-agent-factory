@@ -14,11 +14,12 @@ from pathlib import Path
 # ============================================================
 # 設定
 # ============================================================
-FACTORY_ROOT = Path(__file__).parent.parent
-PLUGINS_DIR  = FACTORY_ROOT / "plugins"
-REGISTRY_MD  = FACTORY_ROOT / "registry.md"
-README_MD    = FACTORY_ROOT / "README.md"
-TODAY        = date.today().isoformat()
+FACTORY_ROOT     = Path(__file__).parent.parent
+PLUGINS_DIR      = FACTORY_ROOT / "plugins"
+REGISTRY_MD      = FACTORY_ROOT / "registry.md"
+README_MD        = FACTORY_ROOT / "README.md"
+HOW_IT_WORKS_MD  = FACTORY_ROOT / "_docs" / "how-it-works.md"
+TODAY            = date.today().isoformat()
 
 
 # ============================================================
@@ -216,14 +217,15 @@ def build_statistics(assets: list[dict]) -> str:
         skill_lines.append(f"  - plugin/{plugin} ({len(names)}): {', '.join(names)}")
 
     agent_names = ", ".join(a["name"] for a in agents)
-    plugin_count = len(list(PLUGINS_DIR.iterdir())) if PLUGINS_DIR.exists() else 0
+    plugin_names = sorted(plugin_map.keys())
+    plugin_count = len(plugin_names)
 
     lines = [
         f"- **Total assets**: {len(assets)}",
         f"- **Skills**: {len(skills)}",
     ] + skill_lines + [
         f"- **Agents**: {len(agents)} ({agent_names})",
-        f"- **Plugins**: {plugin_count} (devops, figma, project)",
+        f"- **Plugins**: {plugin_count} ({', '.join(plugin_names)})",
         "- **Hooks**: 0",
         "- **MCP Servers**: 0",
         "- **Output Styles**: 0",
@@ -307,10 +309,11 @@ def update_readme(assets: list[dict]):
 # README Agent Teams セクション自動更新
 # ============================================================
 TEAM_EXECUTION = {
-    "review-team":  "**Parallel**",
-    "quality-team": "**Sequential**",
-    "commit-team":  "**Sequential**",
-    "feature-team": "**Gated**",
+    "review-team":   "**Parallel**",
+    "quality-team":  "**Sequential**",
+    "commit-team":   "**Sequential**",
+    "feature-team":  "**Gated**",
+    "eventbus-team": "**Sequential**",
 }
 
 
@@ -358,6 +361,147 @@ def update_readme_teams(text: str) -> str:
 
 
 # ============================================================
+# how-it-works.md 自動更新 (マーカーベース)
+# ============================================================
+def build_agent_summary_kr(agents: list[dict]) -> str:
+    """how-it-works.md 用エージェントサマリーテーブル (韓国語)"""
+    lines = [
+        f"**에이전트 {len(agents)}개**",
+        "",
+        "| 에이전트 | 역할 | 모델 | 플러그인 |",
+        "|---------|------|------|---------|",
+    ]
+    for a in agents:
+        desc = a["description"].replace("|", "\\|")
+        if len(desc) > 40:
+            desc = desc[:37] + "..."
+        lines.append(f"| `{a['name']}` | {desc} | {a.get('model','sonnet')} | {a.get('plugin','—')} |")
+    return "\n".join(lines)
+
+
+def build_skill_summary_kr(skills: list[dict]) -> str:
+    """how-it-works.md 用スキルサマリーテーブル (韓国語)"""
+    plugin_map: dict[str, list[str]] = {}
+    for s in skills:
+        plugin_map.setdefault(s.get("plugin", "—"), []).append(s["name"])
+
+    plugin_count = len(plugin_map)
+    total = len(skills)
+
+    lines = [
+        f"**스킬 {total}개 ({plugin_count}개 플러그인)**",
+        "",
+        "| 플러그인 | 스킬 |",
+        "|---------|------|",
+    ]
+    for plugin, names in sorted(plugin_map.items()):
+        # プラグインプレフィックスを削除して短縮名を表示
+        short_names = []
+        for n in sorted(names):
+            short = n.replace(f"{plugin}-", "", 1) if n.startswith(f"{plugin}-") else n
+            short_names.append(short)
+        lines.append(f"| {plugin} ({len(names)}개) | {', '.join(short_names)} |")
+    return "\n".join(lines)
+
+
+def build_team_table_kr(teams: dict[str, list[str]]) -> str:
+    """how-it-works.md 用チームテーブル (韓国語)"""
+    # 韓国語実行方式マッピング
+    team_exec_kr = {
+        "review-team":   "**Parallel** (병렬)",
+        "quality-team":  "**Sequential** (순차)",
+        "commit-team":   "**Sequential** (순차)",
+        "feature-team":  "**Gated** (게이트)",
+        "eventbus-team": "**Sequential** (순차)",
+    }
+    # 韓国語用途マッピング
+    team_purpose_kr = {
+        "review-team":   "코드 품질 다각도 검토",
+        "quality-team":  "테스트/일본어/버전 체크",
+        "commit-team":   "커밋 처리",
+        "feature-team":  "기능 개발 전 요건/설계 확인",
+        "eventbus-team": "Vert.x: repo-analyze → register → api-caller",
+    }
+    lines = [
+        "| 팀 | 실행 방식 | 용도 |",
+        "|----|---------|------|",
+    ]
+    for team in sorted(teams.keys()):
+        exec_style = team_exec_kr.get(team, "—")
+        purpose = team_purpose_kr.get(team, "—")
+        lines.append(f"| `{team}` | {exec_style} | {purpose} |")
+    return "\n".join(lines)
+
+
+def collect_teams() -> dict[str, list[str]]:
+    """全 plugin.json の teams: を集約"""
+    team_members: dict[str, list[str]] = {}
+    if PLUGINS_DIR.exists():
+        for plugin_dir in sorted(PLUGINS_DIR.iterdir()):
+            if not plugin_dir.is_dir():
+                continue
+            pjson = plugin_dir / "plugin.json"
+            if not pjson.exists():
+                continue
+            try:
+                data = json.loads(pjson.read_text(encoding="utf-8"))
+            except json.JSONDecodeError:
+                continue
+            for team_name, members in data.get("teams", {}).items():
+                team_members.setdefault(team_name, []).extend(members)
+    return team_members
+
+
+def update_how_it_works(skills: list[dict], agents: list[dict]):
+    """how-it-works.md のマーカーブロックを自動更新"""
+    if not HOW_IT_WORKS_MD.exists():
+        print("⚠️  how-it-works.md が見つからない — スキップ")
+        return
+
+    text = HOW_IT_WORKS_MD.read_text(encoding="utf-8")
+    teams = collect_teams()
+
+    # AGENT_SUMMARY ブロック
+    agent_block = build_agent_summary_kr(agents)
+    text = re.sub(
+        r"(<!-- SYNC:AGENT_SUMMARY_START -->).*?(<!-- SYNC:AGENT_SUMMARY_END -->)",
+        rf"\g<1>\n{agent_block}\n\g<2>",
+        text,
+        flags=re.DOTALL,
+    )
+
+    # SKILL_SUMMARY ブロック
+    skill_block = build_skill_summary_kr(skills)
+    text = re.sub(
+        r"(<!-- SYNC:SKILL_SUMMARY_START -->).*?(<!-- SYNC:SKILL_SUMMARY_END -->)",
+        rf"\g<1>\n{skill_block}\n\g<2>",
+        text,
+        flags=re.DOTALL,
+    )
+
+    # TEAM_COUNT ブロック
+    team_heading = f"### {len(teams)}가지 팀"
+    text = re.sub(
+        r"(<!-- SYNC:TEAM_COUNT_START -->).*?(<!-- SYNC:TEAM_COUNT_END -->)",
+        rf"\g<1>\n{team_heading}\n\g<2>",
+        text,
+        flags=re.DOTALL,
+    )
+
+    # TEAM_TABLE ブロック
+    team_table = build_team_table_kr(teams)
+    text = re.sub(
+        r"(<!-- SYNC:TEAM_TABLE_START -->).*?(<!-- SYNC:TEAM_TABLE_END -->)",
+        rf"\g<1>\n{team_table}\n\g<2>",
+        text,
+        flags=re.DOTALL,
+    )
+
+    HOW_IT_WORKS_MD.write_text(text, encoding="utf-8")
+    print(f"✅ how-it-works.md 更新完了")
+
+
+# ============================================================
 # エントリポイント
 # ============================================================
 def main():
@@ -382,6 +526,9 @@ def main():
     readme_text = update_readme_teams(readme_text)
     README_MD.write_text(readme_text, encoding="utf-8")
     print("✅ README.md Teams テーブル更新完了")
+
+    # how-it-works.md 自動更新
+    update_how_it_works(skills, agents)
 
     print("\n✨ 同期完了!")
 
