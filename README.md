@@ -69,7 +69,7 @@ Skills across plugins are grouped into **teams** for coordinated execution. Team
 | Team | Execution | Members |
 |------|-----------|---------|
 | `commit-team` | **Sequential** | devops-git-commit |
-| `eventbus-team` | — | vertx-repo-analyzer, vertx-eventbus-register, vertx-api-caller |
+| `eventbus-team` | **Sequential** | vertx-repo-analyzer, vertx-eventbus-register, vertx-api-caller |
 | `feature-team` | **Gated** | devops-requirements, devops-frontend-review, figma-design-analyzer, figma-design-token-extractor, figma-framework-figma-mapper, figma-code-sync, figma-project-context, figma-component-inventory |
 | `quality-team` | **Sequential** | devops-test-gen, devops-japanese-comments, devops-version-check |
 | `review-team` | **Parallel** | devops-code-review, devops-arch-review, devops-safety-check, figma-responsive-validator |

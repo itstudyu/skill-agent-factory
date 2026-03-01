@@ -382,7 +382,9 @@ skill-agent-factory/
 │   │       └── resources/     ← Tier 3 (요청 시 로드)
 │   ├── figma/
 │   │   ├── plugin.json
-│   │   ├── agents/figma-to-code.md
+│   │   ├── agents/
+│   │   │   ├── figma-to-code.md
+│   │   │   └── figma-designer.md
 │   │   └── skills/{name}/
 │   ├── project/
 │   │   ├── plugin.json
