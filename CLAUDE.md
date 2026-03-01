@@ -64,6 +64,27 @@ New team → add row here + `_docs/agent-teams.md` + `KNOWN_TEAMS` in `scripts/l
 
 ---
 
+## Verification Skills (kimoring-ai-skills)
+
+Session-based verification framework. Skills are auto-discovered via glob — no manual registry needed.
+
+| Skill | Purpose | When to Run |
+|-------|---------|-------------|
+| `manage-skills` | Analyze session changes, create/update verify skills, manage CLAUDE.md | After implementation, before PR |
+| `verify-implementation` | Sequentially run all verify skills, produce integrated report | After implementation, during review |
+
+**How it works:**
+
+```
+Code changes → /manage-skills → discover .claude/skills/verify-*/ via glob
+    → gap analysis → create/update verify skills
+    → /verify-implementation → run all checks → integrated report
+```
+
+Verify skills are dynamically discovered from `.claude/skills/verify-*/SKILL.md`. No triple-sync needed.
+
+---
+
 ## After Any Change
 
 ```bash
@@ -81,5 +102,5 @@ make validate   # lint + sync registry.md + README.md auto-update
 
 ---
 
-*Last updated: 2026-02-25*
-*Project: Skill & Agent Factory v2.2 (3-tier skills + Agent Teams + Makefile + vertx plugin)*
+*Last updated: 2026-03-01*
+*Project: Skill & Agent Factory v2.3 (3-tier skills + Agent Teams + Makefile + vertx plugin + kimoring verification)*
