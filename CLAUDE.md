@@ -14,6 +14,7 @@
 | Agent format | `_docs/sub-agents.md` |
 | Agent Teams setup & registration | `_docs/agent-teams.md` |
 | DevOps pipeline steps (full) | `plugins/devops/agents/devops-pipeline.md` |
+| PM pipeline (confidence + self-check) | `plugins/pm/agents/pm-pipeline.md` |
 | Registry of all assets | `registry.md` |
 
 ---
@@ -35,6 +36,7 @@ devops-pipeline   (quality gate — ALL coding tasks)
 - **Single-skill request** → invoke directly via metadata.md tag match
 - **Figma request** → devops-pipeline → figma-to-code agent
 - **ANY coding task** → devops-pipeline **always** runs. No exceptions.
+- **PM mode** → pm-pipeline wraps devops-pipeline with confidence check + self-check + reflexion
 
 ---
 
@@ -61,6 +63,28 @@ Full examples → `standards/CODING-STANDARDS.md`
 | `eventbus-team` | Sequential | Vert.x: repo-analyze → register → api-caller |
 
 New team → add row here + `_docs/agent-teams.md` + `KNOWN_TEAMS` in `scripts/lint-skills.py`
+
+---
+
+## PM Skills (Project Management Quality Gates)
+
+Pre/post implementation quality gates inspired by SuperClaude PM Agent.
+
+| Skill | Phase | Purpose |
+|-------|-------|---------|
+| `pm-confidence-check` | Before | 5-dimension assessment (≥90% proceed, 70-89% options, <70% stop) |
+| `pm-self-check` | After | 4 mandatory questions + 7 hallucination red-flag detection |
+| `pm-reflexion` | On Error | Search known solutions → root cause analysis → record for reuse |
+
+**Pipeline**: `pm-pipeline` agent orchestrates all three around devops-pipeline:
+
+```
+pm-confidence-check → devops-pipeline → pm-self-check → commit
+                          ↑                   |
+                          └── pm-reflexion ←───┘ (on failure)
+```
+
+**PDCA Docs**: `docs/temp/` (trial) → `docs/patterns/` (success) / `docs/mistakes/` (failure)
 
 ---
 
@@ -122,4 +146,4 @@ make validate   # lint + sync registry.md + README.md auto-update
 ---
 
 *Last updated: 2026-03-01*
-*Project: Skill & Agent Factory v2.3 (3-tier skills + Agent Teams + Makefile + vertx plugin + kimoring verification)*
+*Project: Skill & Agent Factory v2.4 (3-tier skills + Agent Teams + Makefile + vertx plugin + kimoring verification + PM quality gates)*

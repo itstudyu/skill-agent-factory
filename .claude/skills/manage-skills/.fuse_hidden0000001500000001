@@ -66,14 +66,6 @@ Analyzes changes in the current session to detect and fix drift across ALL proje
 | `vertx-eventbus-register` | `plugins/vertx/skills/vertx-eventbus-register/` | EventBus address registration |
 | `vertx-api-caller` | `plugins/vertx/skills/vertx-api-caller/` | API caller generation from templates |
 
-### PM Plugin Skills
-
-| Skill | Location | Purpose |
-|-------|----------|---------|
-| `pm-confidence-check` | `plugins/pm/skills/pm-confidence-check/` | Pre-implementation 5-dimension confidence assessment |
-| `pm-self-check` | `plugins/pm/skills/pm-self-check/` | Post-implementation evidence-based validation (4Q + 7RF) |
-| `pm-reflexion` | `plugins/pm/skills/pm-reflexion/` | Error learning, root cause analysis, PDCA documentation |
-
 ### Standalone Skills
 
 | Skill | Location | Purpose |
@@ -90,7 +82,6 @@ Analyzes changes in the current session to detect and fix drift across ALL proje
 | `project-onboarding` | `plugins/project/agents/project-onboarding.md` | Project context setup |
 | `vertx-pipeline` | `plugins/vertx/agents/vertx-pipeline.md` | Vert.x EventBus pipeline |
 | `skill-router` | `agents/skill-router.md` | Skill routing and dispatch |
-| `pm-pipeline` | `plugins/pm/agents/pm-pipeline.md` | PM quality gate orchestrator (confidence + self-check + reflexion) |
 
 ### Scripts
 
@@ -162,7 +153,7 @@ Merge into a deduplicated list. If an optional argument specifies a skill name o
 **Discover from the file system directly, covering all locations:**
 
 ```bash
-# Plugin skills (devops, figma, vertx, pm)
+# Plugin skills (devops, figma, vertx)
 ls -d plugins/*/skills/*/SKILL.md 2>/dev/null
 
 # Plugin agents
