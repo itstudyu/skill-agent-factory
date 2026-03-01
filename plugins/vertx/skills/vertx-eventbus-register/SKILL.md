@@ -4,6 +4,7 @@ version: v1.0
 description: Vert.x EventBus に新しいハンドラを Java 7 形式（匿名内部クラス）で登録する。既存 Verticle への追加または新規 Verticle 作成を行い、コーディング規約（日本語コメント、30行制限）に準拠する。
 tags: [vertx, java, java7, eventbus, handler, register]
 allowed-tools: Read, Grep, Glob, Edit, Write, Bash
+requires: [vertx-repo-analyzer]
 ---
 
 # Vert.x EventBus ハンドラ登録

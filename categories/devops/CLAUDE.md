@@ -40,11 +40,13 @@ All DevOps skills are organized as a **sequential pipeline** that runs for every
 | 1 | `plugins/devops/skills/devops-requirements/` | Requirements gathering — hard gate |
 | 2 | `plugins/devops/skills/devops-safety-check/` | Lightweight security scan |
 | 3 | `plugins/devops/skills/devops-code-review/` | Logic, memory, performance |
+| 3.5 | `plugins/devops/skills/devops-arch-review/` | Architecture & coding standards review |
 | 4 | `plugins/devops/skills/devops-japanese-comments/` | Enforce Japanese comments |
 | 5 | `plugins/devops/skills/devops-frontend-review/` | Pixel-perfect UI check (conditional) |
 | 6 | `plugins/devops/skills/devops-version-check/` | Version & deprecated API check |
 | 7 | `plugins/devops/skills/devops-test-gen/` | Auto-generate unit tests |
 | 8 | `plugins/devops/skills/devops-git-commit/` | Branch strategy + Japanese commit |
+| — | `plugins/devops/skills/devops-skill-eval/` | Meta-skill: test & benchmark other skills (standalone) |
 
 Orchestrated by: `plugins/devops/agents/devops-pipeline.md`
 
@@ -62,11 +64,13 @@ skill-agent-factory/
         ├── devops-requirements/   (metadata.md + SKILL.md)
         ├── devops-safety-check/
         ├── devops-code-review/
+        ├── devops-arch-review/
         ├── devops-japanese-comments/
         ├── devops-frontend-review/
         ├── devops-version-check/
         ├── devops-test-gen/
-        └── devops-git-commit/
+        ├── devops-git-commit/
+        └── devops-skill-eval/     (standalone meta-skill)
 ```
 
 ---
@@ -104,4 +108,4 @@ skill-agent-factory/
 - `../../_docs/mcp.md` — MCP for infrastructure tools
 - `../../registry.md` — All assets registry
 
-*Category: devops | Last updated: 2026-02-21*
+*Category: devops | Last updated: 2026-03-01*

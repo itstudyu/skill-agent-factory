@@ -30,20 +30,22 @@ pipeline      (에이전트)      onboarding
     └── feature-team  (게이트)
 ```
 
-**에이전트 3개**
+**에이전트 5개**
 
 | 에이전트 | 역할 | 모델 | 플러그인 |
 |---------|------|------|---------|
 | `devops-pipeline` | 개발 파이프라인 오케스트레이터 | sonnet | devops |
 | `figma-to-code` | Figma → 프로덕션 코드 변환 | opus | figma |
+| `figma-designer` | Figma MCP로 새 디자인 생성 | opus | figma |
 | `project-onboarding` | 프로젝트 최초 1회 초기화 | sonnet | project |
+| `vertx-pipeline` | EventBus 개발 파이프라인 오케스트레이터 | sonnet | vertx |
 
-**스킬 18개 (3개 플러그인)**
+**스킬 20개 (3개 플러그인)**
 
 | 플러그인 | 스킬 |
 |---------|------|
 | devops (10개) | requirements, safety-check, code-review, arch-review, japanese-comments, frontend-review, version-check, test-gen, git-commit, skill-eval |
-| figma (5개) | design-token-extractor, framework-figma-mapper, design-analyzer, code-sync, responsive-validator |
+| figma (7개) | project-context, component-inventory, design-token-extractor, framework-figma-mapper, design-analyzer, code-sync, responsive-validator |
 | vertx (3개) | vertx-repo-analyzer, vertx-eventbus-register, vertx-api-caller |
 
 ---
@@ -64,7 +66,9 @@ plugins/
 │           └── resources/       ← Tier 3: 체크리스트/템플릿 (요청 시)
 ├── figma/
 │   ├── plugin.json
-│   ├── agents/figma-to-code.md
+│   ├── agents/
+│   │   ├── figma-to-code.md
+│   │   └── figma-designer.md
 │   └── skills/...
 └── project/
     ├── plugin.json
@@ -202,7 +206,7 @@ STEP_COMMIT     → 반드시 사용자 확인 후 커밋 (feature/{번호}/{이
 
 스킬들은 **팀** 단위로 그룹화되어 조율 실행됩니다. 팀 멤버십은 각 `plugin.json`에 선언됩니다.
 
-### 4가지 팀
+### 5가지 팀
 
 | 팀 | 실행 방식 | 용도 |
 |----|---------|------|
@@ -210,6 +214,7 @@ STEP_COMMIT     → 반드시 사용자 확인 후 커밋 (feature/{번호}/{이
 | `quality-team` | **Sequential** (순차) | 테스트/일본어/버전 체크 |
 | `commit-team` | **Sequential** (순차) | 커밋 처리 |
 | `feature-team` | **Gated** (게이트) | 기능 개발 전 요건/설계 확인 |
+| `eventbus-team` | **Sequential** (순차) | Vert.x: repo-analyze → register → api-caller |
 
 ### plugin.json 선언 방식
 
@@ -237,6 +242,8 @@ STEP_COMMIT     → 반드시 사용자 확인 후 커밋 (feature/{번호}/{이
 
 ```
 Phase 1: 프레임워크 확인 (React/Vue/PrimeFaces/Next.js 등)
+
+Phase 1.5: 프로젝트 컨텍스트 (context.md 없으면 figma-project-context 실행)
 
 Phase 2: 디자인 분석 (requires: 필드 기반 순서 결정)
   ① figma-design-token-extractor  (requires: 없음 → 최초 실행)
@@ -382,6 +389,7 @@ skill-agent-factory/
 │   │   └── agents/project-onboarding.md
 │   └── vertx/
 │       ├── plugin.json
+│       ├── agents/vertx-pipeline.md
 │       ├── resources/
 │       │   ├── api-reference.md   ← 엔드포인트 계약서 (address/request/response 전체)
 │       │   ├── data-api.md        ← 데이터 처리 모듈
@@ -703,4 +711,4 @@ make validate
 
 ---
 
-*Last updated: 2026-02-25 — plugins/ 구조, 3-tier, Agent Teams, Makefile, 자동화, Usage Scope, Versioning, Workflow 반영*
+*Last updated: 2026-03-01 — plugins/ 구조, 3-tier, Agent Teams, Makefile, 자동화, Usage Scope, Versioning, Workflow, vertx-pipeline, figma 신규 스킬/에이전트 반영*

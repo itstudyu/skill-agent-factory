@@ -21,8 +21,13 @@ allowed-tools: Grep, Read, Glob, Bash
 
 ```bash
 # Search for hardcoded secrets in changed files
-grep -rn "api_key\|apikey\|secret\|password\|token\|passwd\|private_key" --include="*.ts" --include="*.js" --include="*.py" --include="*.env" .
+# Use word-boundary patterns to reduce false positives from camelCase (e.g. tokenize, passwordPolicy)
+grep -rn -w "api_key\|apikey\|API_KEY\|secret\|SECRET\|password\|PASSWORD\|passwd\|private_key\|PRIVATE_KEY" --include="*.ts" --include="*.js" --include="*.py" --include="*.env" .
+# Also check for known secret prefixes in string literals (high-confidence patterns)
+grep -rn "=\s*['\"]sk-\|=\s*['\"]ghp_\|=\s*['\"]xox[bprs]-\|=\s*['\"]AKIA" --include="*.ts" --include="*.js" --include="*.py" .
 ```
+
+> **Note:** The `-w` flag ensures whole-word matching, reducing false positives like `tokenize`, `passwordValidator`.
 
 **Check:**
 - [ ] No hardcoded API keys, passwords, tokens in source code
@@ -48,12 +53,16 @@ If `requirements.txt` or `pyproject.toml` exists → Same quick check.
 ## Scan 3 — Injection Patterns
 
 ```bash
-# SQL Injection patterns
-grep -rn "query\s*+\s*\|execute(\s*f\"\|format(" --include="*.py" --include="*.ts" --include="*.js" .
+# SQL Injection patterns — string concatenation in queries
+grep -rn 'query\s*(\s*["`'"'"'].*+\|execute(\s*f"\|\.format(' --include="*.py" --include="*.ts" --include="*.js" .
+# Template literals in SQL queries
+grep -rn 'query\s*(`\|exec\s*(`' --include="*.ts" --include="*.js" .
 
-# XSS patterns
-grep -rn "innerHTML\s*=\|dangerouslySetInnerHTML\|document\.write(" --include="*.ts" --include="*.tsx" --include="*.js" .
+# XSS patterns (also include .jsx files)
+grep -rn 'innerHTML\s*=\|dangerouslySetInnerHTML\|document\.write(' --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" .
 ```
+
+> **Tip:** Review each match in context — not all `innerHTML` assignments are vulnerable (static strings are safe).
 
 ---
 

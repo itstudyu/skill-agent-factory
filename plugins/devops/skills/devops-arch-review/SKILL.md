@@ -289,103 +289,14 @@ export function formatDate(d: Date): string {
 
 ### 言語別 Re-throw パターン
 
-#### TypeScript / JavaScript
-```typescript
-// ✅ 下位レイヤー（Service / Repository）— フォーマット後 re-throw
-async function fetchUser(id: string): Promise<User> {
-  try {
-    return await db.user.findUniqueOrThrow({ where: { id } });
-  } catch (err) {
-    // エラーフォーマット後 re-throw のみ
-    throw new Error(`[UserRepository] ユーザー取得失敗: ${(err as Error).message}`);
-  }
-}
+> **詳細な言語別コード例:** `resources/rethrow-patterns.md` を参照。
+> TypeScript, Python, Java, Go の全パターンが記載されている。
 
-// ✅ Main レイヤー（Controller）— 最終ログ + 出力
-async function handleGetUser(req: Request, res: Response) {
-  try {
-    const user = await userService.getUser(req.params.id);
-    res.json(user);
-  } catch (err) {
-    // 最終ログ + レスポンス返却
-    logger.error((err as Error).message);
-    res.status(500).json({ error: (err as Error).message });
-  }
-}
-```
-
-#### Python
-```python
-# ✅ 下位レイヤー（Service / Repository）— フォーマット後 re-raise
-def fetch_user(user_id: str) -> User:
-    try:
-        return db.query(User).filter(User.id == user_id).one()
-    except NoResultFound as e:
-        # エラーフォーマット後 re-raise のみ
-        raise RuntimeError(f"[UserRepository] ユーザー取得失敗: {e}") from e
-
-# ✅ Main レイヤー — 最終ログ + 出力
-def handle_get_user(user_id: str):
-    try:
-        user = user_service.get_user(user_id)
-        return jsonify(user)
-    except RuntimeError as e:
-        # 最終ログ + レスポンス返却
-        logger.error(str(e))
-        return jsonify({"error": str(e)}), 500
-```
-
-#### Java
-```java
-// ✅ 下位レイヤー（Repository）— フォーマット後 re-throw
-public User fetchUser(String id) {
-    try {
-        return userRepository.findById(id)
-            .orElseThrow(() -> new EntityNotFoundException("not found"));
-    } catch (Exception e) {
-        // エラーフォーマット後 re-throw のみ
-        throw new ServiceException("[UserRepository] ユーザー取得失敗: " + e.getMessage(), e);
-    }
-}
-
-// ✅ Main レイヤー（Controller）— 最終ログ + 出力
-@GetMapping("/{id}")
-public ResponseEntity<?> getUser(@PathVariable String id) {
-    try {
-        User user = userService.getUser(id);
-        return ResponseEntity.ok(user);
-    } catch (ServiceException e) {
-        // 最終ログ + レスポンス返却
-        log.error(e.getMessage());
-        return ResponseEntity.status(500).body(Map.of("error", e.getMessage()));
-    }
-}
-```
-
-#### Go
-```go
-// ✅ 下位レイヤー（Repository）— エラーラップ後 return
-func (r *UserRepository) FetchUser(id string) (*User, error) {
-    user, err := r.db.FindUser(id)
-    if err != nil {
-        // %w でラップして re-return のみ
-        return nil, fmt.Errorf("[UserRepository] ユーザー取得失敗: %w", err)
-    }
-    return user, nil
-}
-
-// ✅ Main レイヤー（Handler）— 最終ログ + 出力
-func (h *UserHandler) GetUser(w http.ResponseWriter, r *http.Request) {
-    user, err := h.service.GetUser(r.PathValue("id"))
-    if err != nil {
-        // 最終ログ + レスポンス返却
-        slog.Error(err.Error())
-        http.Error(w, err.Error(), http.StatusInternalServerError)
-        return
-    }
-    json.NewEncoder(w).Encode(user)
-}
-```
+**概要:**
+- **TypeScript/JS:** `throw new Error(\`[Module] 操作失敗: ${err.message}\`)` → Main で `catch` + `logger.error` + `res.status(500)`
+- **Python:** `raise RuntimeError(f"[Module] 操作失敗: {e}") from e` → Main で `except` + `logger.error` + `jsonify`
+- **Java:** `throw new ServiceException("[Module] 操作失敗: " + e.getMessage(), e)` → Main で `catch` + `log.error` + `ResponseEntity`
+- **Go:** `return nil, fmt.Errorf("[Module] 操作失敗: %w", err)` → Main で `if err != nil` + `slog.Error` + `http.Error`
 
 ---
 
@@ -397,28 +308,7 @@ func (h *UserHandler) GetUser(w http.ResponseWriter, r *http.Request) {
 [モジュール名] 操作名失敗: 理由
 ```
 
-**言語別例:**
-
-```typescript
-// TypeScript
-throw new Error(`[UserService] ユーザー作成失敗: メールアドレスが重複しています`);
-throw new Error(`[PaymentService] 決済処理失敗: カードが拒否されました`);
-```
-
-```python
-# Python
-raise RuntimeError(f"[UserService] ユーザー作成失敗: メールアドレスが重複しています")
-```
-
-```java
-// Java
-throw new ServiceException("[UserService] ユーザー作成失敗: メールアドレスが重複しています");
-```
-
-```go
-// Go
-return nil, fmt.Errorf("[UserService] ユーザー作成失敗: メールアドレスが重複しています")
-```
+> **言語別コード例:** `resources/error-message-patterns.md` を参照（TypeScript, Python, Java, Go）。
 
 **チェックポイント:**
 - `[ ]` でモジュール名を括っているか

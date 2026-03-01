@@ -32,13 +32,17 @@
 | figma-design-analyzer | skill | figma | sonnet | `figma`, `design`, `analyze`, `blueprint`, `frontend`, `planning`, `implementation-plan` | v1.0 | Before coding begins. User wants to analyze a Figma design and produce a frontend implementation ... | plugins/figma/skills/figma-design-analyzer/SKILL.md | 2026-02-24 |
 | figma-design-token-extractor | skill | figma | sonnet | `figma`, `design-token`, `colors`, `typography`, `css`, `scss`, `extract` | v1.0 | User wants to extract design tokens from Figma (colors, fonts, spacing, shadows) and convert to C... | plugins/figma/skills/figma-design-token-extractor/SKILL.md | 2026-02-24 |
 | figma-framework-figma-mapper | skill | figma | sonnet | `figma`, `framework`, `component`, `mapping`, `ui-kit`, `primefaces` | v1.0 | User wants to map UI framework components (PrimeFaces, custom) to Figma design components. Genera... | plugins/figma/skills/figma-framework-figma-mapper/SKILL.md | 2026-02-24 |
-| figma-responsive-validator | skill | figma | haiku | `figma`, `responsive`, `validate`, `mobile`, `layout`, `breakpoint`, `tablet` | v1.0 | User wants to validate responsive design across Mobile, Tablet, Desktop breakpoints. Detects layo... | plugins/figma/skills/figma-responsive-validator/SKILL.md | 2026-02-24 |
+| figma-project-context | skill | figma | sonnet | `figma`, `project`, `context`, `setup`, `framework`, `convention`, `init` | v1.0 | Analyze project structure and generate context.md consumed by all downstream Figma skills. Detect... | plugins/figma/skills/figma-project-context/SKILL.md | 2026-03-01 |
+| figma-component-inventory | skill | figma | sonnet | `figma`, `component`, `inventory`, `catalog`, `scan`, `audit`, `gap-analysis` | v1.0 | Scan and catalog all Figma components, perform gap analysis against codebase. Generates component... | plugins/figma/skills/figma-component-inventory/SKILL.md | 2026-03-01 |
+| figma-responsive-validator | skill | figma | sonnet | `figma`, `responsive`, `validate`, `mobile`, `layout`, `breakpoint`, `tablet` | v1.0 | User wants to validate responsive design across Mobile, Tablet, Desktop breakpoints. Detects layo... | plugins/figma/skills/figma-responsive-validator/SKILL.md | 2026-03-01 |
 | vertx-api-caller | skill | vertx | sonnet | `vertx`, `eventbus`, `frontend`, `javascript`, `sockjs`, `api-call` | v1.0 | フロントエンド（JavaScript/TypeScript）から Vert.x EventBus を呼び出すコードを書きたいとき。SockJS + EventBus クライアントを使った API... | plugins/vertx/skills/vertx-api-caller/SKILL.md | 2026-02-24 |
 | vertx-eventbus-register | skill | vertx | sonnet | `vertx`, `java`, `java7`, `eventbus`, `handler`, `register`, `verticle` | v1.0 | Vert.x EventBus に新しいエンドポイント（ハンドラ）を追加したいとき。Java 7 の匿名内部クラス形式でハンドラを登録する。既存の Verticle に handler を追加す... | plugins/vertx/skills/vertx-eventbus-register/SKILL.md | 2026-02-24 |
 | vertx-repo-analyzer | skill | vertx | sonnet | `vertx`, `java`, `eventbus`, `verticle`, `analysis`, `repo` | v1.0 | Vert.x プロジェクトの構造を把握したいとき。EventBus のエンドポイント一覧を確認したいとき。既存の Verticle クラスを調べたいとき。新しいエンドポイントを追加する前の事前調... | plugins/vertx/skills/vertx-repo-analyzer/SKILL.md | 2026-02-24 |
 | devops-pipeline | agent | devops | sonnet | — | v1.0 | Development pipeline orchestrator. Automatically invoked by CLAUDE.md for all development tasks. ... | plugins/devops/agents/devops-pipeline.md | 2026-02-24 |
-| figma-to-code | agent | figma | opus | — | v1.0 | Converts Figma designs into production-ready frontend code. Use proactively when the user wants t... | plugins/figma/agents/figma-to-code.md | 2026-02-24 |
+| figma-designer | agent | figma | opus | — | v1.0 | Talk to Figma MCP agent to create new designs following design system. Gathers requirements, load... | plugins/figma/agents/figma-designer.md | 2026-03-01 |
+| figma-to-code | agent | figma | opus | — | v1.1 | Converts Figma designs into production-ready frontend code. Use proactively when the user wants t... | plugins/figma/agents/figma-to-code.md | 2026-03-01 |
 | project-onboarding | agent | project | sonnet | — | v1.0 | Project onboarding agent. Auto-detects existing vs new projects, analyzes code patterns, and gene... | plugins/project/agents/project-onboarding.md | 2026-02-24 |
+| vertx-pipeline | agent | vertx | sonnet | — | v1.0 | Vert.x EventBus development pipeline orchestrator. Runs eventbus-team in sequence: repo-analyzer ... | plugins/vertx/agents/vertx-pipeline.md | 2026-03-01 |
 
 ---
 
@@ -57,15 +61,15 @@
 
 ## Statistics
 
-- **Total assets**: 21
-- **Skills**: 18
+- **Total assets**: 25
+- **Skills**: 20
   - plugin/devops (10): devops-arch-review, devops-code-review, devops-frontend-review, devops-git-commit, devops-japanese-comments, devops-requirements, devops-safety-check, devops-skill-eval, devops-test-gen, devops-version-check
-  - plugin/figma (5): figma-code-sync, figma-design-analyzer, figma-design-token-extractor, figma-framework-figma-mapper, figma-responsive-validator
+  - plugin/figma (7): figma-code-sync, figma-component-inventory, figma-design-analyzer, figma-design-token-extractor, figma-framework-figma-mapper, figma-project-context, figma-responsive-validator
   - plugin/vertx (3): vertx-api-caller, vertx-eventbus-register, vertx-repo-analyzer
-- **Agents**: 3 (devops-pipeline, figma-to-code, project-onboarding)
-- **Plugins**: 4 (devops, figma, project)
+- **Agents**: 5 (devops-pipeline, figma-designer, figma-to-code, project-onboarding, vertx-pipeline)
+- **Plugins**: 4 (devops, figma, project, vertx)
 - **Hooks**: 0
 - **MCP Servers**: 0
 - **Output Styles**: 0
 
-*Last updated: 2026-02-24*
+*Last updated: 2026-03-01*

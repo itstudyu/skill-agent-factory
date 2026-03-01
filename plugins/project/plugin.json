@@ -4,8 +4,6 @@
   "version": "1.0.0",
   "skills": [],
   "agents": ["project-onboarding"],
-  "teams": {
-    "feature-team": []
-  },
-  "_note": "project plugin has no skills; project-onboarding agent is invoked standalone before other teams"
+  "teams": {},
+  "_note": "project plugin has no skills; project-onboarding agent is invoked standalone before other teams. feature-team is defined in CLAUDE.md at project root level."
 }

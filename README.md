@@ -23,9 +23,15 @@ skill-agent-factory/
 │   │       ├── metadata.md    ← Tier 1: routing (tags, use-when, model) — always loaded
 │   │       ├── SKILL.md       ← Tier 2: full instructions — loaded only when selected
 │   │       └── resources/     ← Tier 3: checklists, templates — loaded on-demand
-│   ├── figma/             ← Figma plugin (5 skills + figma-to-code agent)
+│   ├── figma/             ← Figma plugin (7 skills + 2 agents)
 │   │   ├── plugin.json
-│   │   ├── agents/figma-to-code.md
+│   │   ├── agents/
+│   │   │   ├── figma-to-code.md
+│   │   │   └── figma-designer.md
+│   │   └── skills/{skill-name}/
+│   ├── vertx/             ← Vert.x plugin (3 skills + vertx-pipeline agent)
+│   │   ├── plugin.json
+│   │   ├── agents/vertx-pipeline.md
 │   │   └── skills/{skill-name}/
 │   └── project/           ← Project plugin (project-onboarding agent)
 │       ├── plugin.json
@@ -64,7 +70,7 @@ Skills across plugins are grouped into **teams** for coordinated execution. Team
 |------|-----------|---------|
 | `commit-team` | **Sequential** | devops-git-commit |
 | `eventbus-team` | — | vertx-repo-analyzer, vertx-eventbus-register, vertx-api-caller |
-| `feature-team` | **Gated** | devops-requirements, devops-frontend-review, figma-design-analyzer, figma-design-token-extractor, figma-framework-figma-mapper, figma-code-sync |
+| `feature-team` | **Gated** | devops-requirements, devops-frontend-review, figma-design-analyzer, figma-design-token-extractor, figma-framework-figma-mapper, figma-code-sync, figma-project-context, figma-component-inventory |
 | `quality-team` | **Sequential** | devops-test-gen, devops-japanese-comments, devops-version-check |
 | `review-team` | **Parallel** | devops-code-review, devops-arch-review, devops-safety-check, figma-responsive-validator |
 <!-- TEAMS_TABLE_END -->
@@ -205,10 +211,12 @@ claude --plugin-dir ~/path/to/skill-agent-factory
 | Skill | Model | Tags | Purpose |
 |-------|-------|------|---------|
 | `figma-code-sync` | sonnet | `figma`, `sync`, `verify`, `design-match`, `implementation`, `validate` | User wants to validate that implemented code matches the Figma design, check for |
+| `figma-component-inventory` | sonnet | `figma`, `component`, `inventory`, `catalog`, `scan`, `audit`, `gap-analysis` | Scan and catalog all Figma components, perform gap analysis against codebase |
 | `figma-design-analyzer` | sonnet | `figma`, `design`, `analyze`, `blueprint`, `frontend`, `planning`, `implementation-plan` | Before coding begins. User wants to analyze a Figma design and produce a fronten |
 | `figma-design-token-extractor` | sonnet | `figma`, `design-token`, `colors`, `typography`, `css`, `scss`, `extract` | User wants to extract design tokens from Figma (colors, fonts, spacing, shadows) |
 | `figma-framework-figma-mapper` | sonnet | `figma`, `framework`, `component`, `mapping`, `ui-kit`, `primefaces` | User wants to map UI framework components (PrimeFaces, custom) to Figma design c |
-| `figma-responsive-validator` | haiku | `figma`, `responsive`, `validate`, `mobile`, `layout`, `breakpoint`, `tablet` | User wants to validate responsive design across Mobile, Tablet, Desktop breakpoi |
+| `figma-project-context` | sonnet | `figma`, `project`, `context`, `setup`, `framework`, `convention`, `init` | Analyze project structure and generate context.md consumed by downstream Figma s |
+| `figma-responsive-validator` | sonnet | `figma`, `responsive`, `validate`, `mobile`, `layout`, `breakpoint`, `tablet` | User wants to validate responsive design across Mobile, Tablet, Desktop breakpoi |
 
 ### Vertx Plugin Skills
 
@@ -223,8 +231,10 @@ claude --plugin-dir ~/path/to/skill-agent-factory
 | Agent | Plugin | Model | Purpose |
 |-------|--------|-------|---------|
 | `devops-pipeline` | devops | sonnet | Development pipeline orchestrator. Automatically invoked by CLAUDE.md for all de |
+| `figma-designer` | figma | opus | Talk to Figma MCP agent to create new designs following design system |
 | `figma-to-code` | figma | opus | Converts Figma designs into production-ready frontend code. Use proactively when |
 | `project-onboarding` | project | sonnet | Project onboarding agent. Auto-detects existing vs new projects, analyzes code p |
+| `vertx-pipeline` | vertx | sonnet | Vert.x EventBus development pipeline orchestrator. Runs eventbus-team in sequenc |
 
 
 ## Adding a New Skill
