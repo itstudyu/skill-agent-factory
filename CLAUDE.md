@@ -83,6 +83,25 @@ Code changes → /manage-skills → discover .claude/skills/verify-*/ via glob
 
 Verify skills are dynamically discovered from `.claude/skills/verify-*/SKILL.md`. No triple-sync needed.
 
+**Verification covers ALL project assets (14 categories):**
+
+| # | Category | Asset | What it checks |
+|---|----------|-------|---------------|
+| 1 | Skill Structure | `lint-skills.py` | Frontmatter, required fields, circular deps |
+| 2 | Dependency Graph | `dep-graph.py` | Circular references, deep chains |
+| 3 | Registry Sync | `sync-registry.py` | registry.md / README.md up to date |
+| 4 | Security | `devops-safety-check` | Secrets, injection, vulnerabilities |
+| 5 | Code Quality | `devops-code-review` | Logic, performance, N+1, dead code |
+| 6 | Architecture | `devops-arch-review` | Structure, naming, duplication, SRP |
+| 7 | Japanese Comments | `devops-japanese-comments` | All comments/logs in Japanese |
+| 8 | Coding Standards | `CODING-STANDARDS.md` | 10 global rules |
+| 9 | Version Compat | `devops-version-check` | Language/library version |
+| 10 | Tests | `devops-test-gen` | Test coverage |
+| 11 | Frontend | `devops-frontend-review` + figma | UI, responsive, design tokens |
+| 12 | Vert.x | vertx skills | EventBus, API, repo structure |
+| 13 | Git | `devops-git-commit` | Branch strategy, commit format |
+| 14 | Custom | `.claude/skills/verify-*` | User-created verify skills |
+
 ---
 
 ## After Any Change

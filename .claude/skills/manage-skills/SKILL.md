@@ -1,30 +1,101 @@
 ---
 name: manage-skills
-description: Analyzes session changes to detect verification skill drift. Dynamically discovers existing skills, creates new ones or updates existing ones, then manages CLAUDE.md.
+description: Analyzes session changes to detect verification skill drift. Dynamically discovers ALL skills across the project, creates new verify skills or updates existing ones, then manages CLAUDE.md.
 disable-model-invocation: true
 argument-hint: "[optional: specific skill name or area to focus on]"
 ---
 
-<!-- セッション変更分析 — verify スキルのドリフト検出・修正を担当 -->
+<!-- セッション変更分析 — 全スキル・エージェント・スクリプトのドリフト検出・修正を担当 -->
 
 # Session-Based Skill Maintenance
 
 ## Purpose
 
-Analyzes changes in the current session to detect and fix verification skill drift:
+Analyzes changes in the current session to detect and fix drift across ALL project assets:
 
-1. **Coverage gaps** — changed files not referenced by any verify skill
+1. **Coverage gaps** — changed files not referenced by any skill
 2. **Invalid references** — skills referencing deleted or moved files
 3. **Missing checks** — new patterns/rules not covered by existing checks
 4. **Stale values** — config values or detection commands that no longer match
+5. **Cross-asset consistency** — teams, registry, pipeline referencing skills that exist
 
 ## When to Run
 
 - After implementing a feature that introduces new patterns or rules
-- When modifying existing verify skills and checking for consistency
-- Before a PR to confirm verify skills cover changed areas
+- When modifying existing skills and checking for consistency
+- Before a PR to confirm skills cover changed areas
 - When a verification run missed expected issues
 - Periodically to align skills with codebase changes
+
+## Registered Assets
+
+<!-- 登録済み全アセット — スキル・エージェント・スクリプト・標準の完全インベントリ -->
+
+### DevOps Plugin Skills
+
+| Skill | Location | Purpose |
+|-------|----------|---------|
+| `devops-safety-check` | `plugins/devops/skills/devops-safety-check/` | Secret scanning, injection patterns, dependency vulnerabilities |
+| `devops-code-review` | `plugins/devops/skills/devops-code-review/` | Logic correctness, performance, memory efficiency, code quality |
+| `devops-arch-review` | `plugins/devops/skills/devops-arch-review/` | Architecture, folder structure, naming conventions, duplication |
+| `devops-japanese-comments` | `plugins/devops/skills/devops-japanese-comments/` | Japanese comment conversion for all source files |
+| `devops-frontend-review` | `plugins/devops/skills/devops-frontend-review/` | Frontend pixel-perfect, responsive validation |
+| `devops-version-check` | `plugins/devops/skills/devops-version-check/` | Language/library version compatibility |
+| `devops-test-gen` | `plugins/devops/skills/devops-test-gen/` | Unit test generation (happy path, edge case, error case) |
+| `devops-git-commit` | `plugins/devops/skills/devops-git-commit/` | Branch strategy, commit message format, staging rules |
+| `devops-requirements` | `plugins/devops/skills/devops-requirements/` | Requirements gathering, project-context validation |
+| `devops-skill-eval` | `plugins/devops/skills/devops-skill-eval/` | Skill quality evaluation (happy/edge/negative scenarios) |
+
+### Figma Plugin Skills
+
+| Skill | Location | Purpose |
+|-------|----------|---------|
+| `figma-design-analyzer` | `plugins/figma/skills/figma-design-analyzer/` | Figma design analysis and blueprint generation |
+| `figma-code-sync` | `plugins/figma/skills/figma-code-sync/` | Figma-to-code synchronization |
+| `figma-design-token-extractor` | `plugins/figma/skills/figma-design-token-extractor/` | Design token extraction (colors, typography, spacing) |
+| `figma-framework-figma-mapper` | `plugins/figma/skills/figma-framework-figma-mapper/` | Framework component mapping |
+| `figma-responsive-validator` | `plugins/figma/skills/figma-responsive-validator/` | Responsive breakpoint validation |
+| `figma-project-context` | `plugins/figma/skills/figma-project-context/` | Project context for Figma integration |
+| `figma-component-inventory` | `plugins/figma/skills/figma-component-inventory/` | Component inventory management |
+
+### Vert.x Plugin Skills
+
+| Skill | Location | Purpose |
+|-------|----------|---------|
+| `vertx-repo-analyzer` | `plugins/vertx/skills/vertx-repo-analyzer/` | Repository structure analysis for Vert.x projects |
+| `vertx-eventbus-register` | `plugins/vertx/skills/vertx-eventbus-register/` | EventBus address registration |
+| `vertx-api-caller` | `plugins/vertx/skills/vertx-api-caller/` | API caller generation from templates |
+
+### Standalone Skills
+
+| Skill | Location | Purpose |
+|-------|----------|---------|
+| `devops-pr-description` | `skills/devops-pr-description/` | PR description generation |
+
+### Agents
+
+| Agent | Location | Purpose |
+|-------|----------|---------|
+| `devops-pipeline` | `plugins/devops/agents/devops-pipeline.md` | Development pipeline orchestration (quality gate) |
+| `figma-to-code` | `plugins/figma/agents/figma-to-code.md` | Figma design to code conversion |
+| `figma-designer` | `plugins/figma/agents/figma-designer.md` | Figma design workflow |
+| `project-onboarding` | `plugins/project/agents/project-onboarding.md` | Project context setup |
+| `vertx-pipeline` | `plugins/vertx/agents/vertx-pipeline.md` | Vert.x EventBus pipeline |
+| `skill-router` | `agents/skill-router.md` | Skill routing and dispatch |
+
+### Scripts
+
+| Script | Location | Purpose |
+|--------|----------|---------|
+| `lint-skills.py` | `scripts/lint-skills.py` | Skill structure, frontmatter, references, circular dependency checks |
+| `sync-registry.py` | `scripts/sync-registry.py` | registry.md and README.md auto-sync |
+| `dep-graph.py` | `scripts/dep-graph.py` | Dependency graph visualization and cycle detection |
+
+### Standards
+
+| Standard | Location | Purpose |
+|----------|----------|---------|
+| `CODING-STANDARDS.md` | `standards/CODING-STANDARDS.md` | 10 global coding rules (Japanese headers, 30-line functions, etc.) |
 
 ## Workflow
 
@@ -48,7 +119,6 @@ git diff main...HEAD --name-only 2>/dev/null || git diff master...HEAD --name-on
 **Non-git fallback:**
 
 ```bash
-# Source files modified more recently than this skill, excluding internals
 find . -type f -not -path '*/.git/*' -not -path '*/node_modules/*' \
        -not -path '*/.claude/skills/*' -newer .claude/skills/manage-skills/SKILL.md \
        2>/dev/null | head -50
@@ -58,7 +128,7 @@ If both methods fail, ask the user for a list of changed files.
 
 Merge into a deduplicated list. If an optional argument specifies a skill name or area, filter to relevant files only.
 
-**Display:** Group files by top-level directory (first 1-2 path segments):
+**Display:** Group files by top-level directory:
 
 ```markdown
 ## Session Changes Detected
@@ -67,75 +137,94 @@ Merge into a deduplicated list. If an optional argument specifies a skill name o
 
 | Directory | Files |
 |-----------|-------|
-| src/components | `Button.tsx`, `Modal.tsx` |
-| src/server | `router.ts`, `handler.ts` |
-| tests | `api.test.ts` |
-| (root) | `package.json`, `.eslintrc.js` |
+| plugins/devops/skills | `devops-safety-check/SKILL.md` |
+| plugins/figma/skills | `figma-code-sync/SKILL.md` |
+| plugins/vertx/skills | `vertx-api-caller/SKILL.md` |
+| scripts | `lint-skills.py` |
+| standards | `CODING-STANDARDS.md` |
 ```
 
-### Step 2: Dynamic Skill Discovery & File Mapping
+### Step 2: Dynamic Asset Discovery & File Mapping
 
-<!-- 動的スキル探索 — ファイルシステムからverifyスキルを自動検出 -->
+<!-- 動的アセット探索 — 全スキル・エージェント・スクリプトを自動検出 -->
 
-#### Sub-step 2a: Auto-discover verify skills
+#### Sub-step 2a: Auto-discover ALL assets
 
-**Discover from the file system directly, not from a manual registry:**
+**Discover from the file system directly, covering all locations:**
 
 ```bash
-# Glob for verify-*/ directories under .claude/skills/
-ls -d .claude/skills/verify-*/ 2>/dev/null
+# Plugin skills (devops, figma, vertx)
+ls -d plugins/*/skills/*/SKILL.md 2>/dev/null
+
+# Plugin agents
+ls plugins/*/agents/*.md 2>/dev/null
+
+# Standalone skills
+ls -d skills/*/SKILL.md 2>/dev/null
+
+# Standalone agents
+ls agents/*.md 2>/dev/null
+
+# Meta skills (verify-* and manage-skills)
+ls -d .claude/skills/*/SKILL.md 2>/dev/null
+
+# Scripts
+ls scripts/*.py 2>/dev/null
+
+# Standards
+ls standards/*.md 2>/dev/null
 ```
 
-For each discovered skill, read its `SKILL.md` and extract file path patterns from:
+For each discovered asset, read its SKILL.md/metadata.md and extract file path patterns from:
 
 1. **Related Files** section — parse table for file paths and glob patterns
 2. **Workflow** section — extract file paths from grep/glob/read commands
+3. **metadata.md requires** field — dependency references
 
-If 0 skills are found (new project with no verify skills yet), skip to Step 4 (CREATE vs UPDATE decision). All changed files are marked "UNCOVERED".
+Compare discovered assets against the **Registered Assets** tables above. Report any discrepancies (new assets not registered, registered assets missing from filesystem).
 
-#### Sub-step 2b: Match changed files to skills
+#### Sub-step 2b: Match changed files to assets
 
-For each changed file from Step 1, match against discovered skill patterns. A file matches a skill if:
+For each changed file from Step 1, match against discovered asset patterns. A file matches an asset if:
 
-- It matches the skill's cover file pattern
-- It is located within a directory the skill references
-- It matches a regex/string pattern used in the skill's detection commands
+- It is the asset's own SKILL.md, metadata.md, or resource file
+- It matches the asset's cover file pattern or referenced directories
+- It matches a regex/string pattern used in the asset's detection commands
 
 #### Sub-step 2c: Display mapping
 
 ```markdown
-### File → Skill Mapping
+### File → Asset Mapping
 
-| Skill | Trigger Files (changed) | Action |
+| Asset | Trigger Files (changed) | Action |
 |-------|------------------------|--------|
-| verify-api | `router.ts`, `handler.ts` | CHECK |
-| verify-ui | `Button.tsx` | CHECK |
-| (no skill) | `package.json`, `.eslintrc.js` | UNCOVERED |
+| devops-safety-check | `SKILL.md` (self) | CHECK |
+| devops-pipeline | `devops-pipeline.md` (self) | CHECK |
+| lint-skills.py | `lint-skills.py` (self) | CHECK |
+| (no asset) | `new-file.ts` | UNCOVERED |
 ```
 
-### Step 3: Coverage Gap Analysis for Affected Skills
+### Step 3: Coverage Gap Analysis for Affected Assets
 
-<!-- カバレッジギャップ分析 — 影響スキルの検査漏れを検出 -->
+<!-- カバレッジギャップ分析 — 影響アセットの検査漏れを検出 -->
 
-For each AFFECTED skill (one with matched changed files), read the full SKILL.md and check:
+For each AFFECTED asset (one with matched changed files), read the full content and check:
 
-1. **Missing file references** — changed files related to this skill's domain not listed in Related Files?
-2. **Stale detection commands** — do the skill's grep/glob patterns still match current file structure? Run sample commands to test.
-3. **Uncovered new patterns** — read changed files and identify new rules, configs, or patterns the skill doesn't check. Look for:
-   - New type definitions, enum variants, or exported symbols
-   - New registrations or configurations
-   - New file naming or directory conventions
+1. **Missing file references** — changed files related to this asset's domain not listed in Related Files?
+2. **Stale detection commands** — do grep/glob patterns still match current file structure? Run sample commands to test.
+3. **Uncovered new patterns** — read changed files and identify new rules, configs, or patterns the asset doesn't check.
 4. **Dangling references** — files listed in Related Files that no longer exist in the codebase?
-5. **Changed values** — specific values the skill checks (identifiers, config keys, type names) that were modified?
+5. **Changed values** — specific values the asset checks that were modified?
+6. **Cross-reference integrity** — does the devops-pipeline still reference all skills correctly? Does registry.md match?
 
 Record each gap:
 
 ```markdown
-| Skill | Gap Type | Details |
+| Asset | Gap Type | Details |
 |-------|----------|---------|
-| verify-api | Missing file | `src/server/newHandler.ts` not in Related Files |
-| verify-ui | New pattern | New component uses unchecked convention |
-| verify-test | Stale value | Test runner pattern in config changed |
+| devops-safety-check | New pattern | New API key format not in detection patterns |
+| devops-pipeline | Stale ref | References skill that was renamed |
+| lint-skills.py | Missing check | New team not in KNOWN_TEAMS |
 ```
 
 ### Step 4: CREATE vs UPDATE Decision
@@ -146,120 +235,46 @@ Apply this decision tree:
 
 ```
 For each group of uncovered files:
-    IF files relate to an existing skill's domain:
-        → Decision: UPDATE existing skill (expand coverage)
+    IF files relate to an existing asset's domain:
+        → Decision: UPDATE existing asset (expand coverage)
     ELSE IF 3+ related files share common rules/patterns:
         → Decision: CREATE new verify skill
     ELSE:
         → Mark as "exempt" (no skill needed)
 ```
 
-Present results to the user:
+Present results to the user and use `AskUserQuestion` to confirm.
 
-```markdown
-### Proposed Actions
+### Step 5: Update Existing Assets
 
-**Decision: UPDATE existing skills** (N)
-- `verify-api` — add 2 missing file references, update detection patterns
-- `verify-test` — update detection commands for new config patterns
+<!-- 既存アセット更新 — 追加・修正のみ、既存検査は削除しない -->
 
-**Decision: CREATE new skills** (M)
-- New skill needed — covers <pattern description> (X uncovered files)
-
-**No action needed:**
-- `package.json` — config file, exempt
-- `README.md` — documentation, exempt
-```
-
-Use `AskUserQuestion` to confirm:
-- Which existing skills to update
-- Whether to create proposed new skills
-- Option to skip entirely
-
-### Step 5: Update Existing Skills
-
-<!-- 既存スキル更新 — 追加・修正のみ、既存検査は削除しない -->
-
-For each skill approved for update, read the current SKILL.md and apply targeted edits:
+For each asset approved for update, read the current content and apply targeted edits:
 
 **Rules:**
 - **Add/modify only** — never remove existing checks that still work
-- Add new file paths to the **Related Files** table
+- Add new file paths to **Related Files** tables
 - Add new detection commands for patterns found in changed files
-- Add new workflow steps or sub-steps for uncovered rules
 - Remove references to files confirmed deleted from the codebase
 - Update specific changed values (identifiers, config keys, type names)
+- Update **Registered Assets** tables in this file if assets were added/removed/moved
 
-**Example — adding to Related Files:**
+### Step 6: Create New Verify Skills
 
-```markdown
-## Related Files
-
-| File | Purpose |
-|------|---------|
-| ... existing entries ... |
-| `src/server/newHandler.ts` | New request handler with validation |
-```
-
-**Example — adding a detection command:**
-
-````markdown
-### Step N: Verify New Pattern
-
-**File:** `path/to/file.ts`
-
-**Check:** Description of what to verify.
-
-```bash
-grep -n "pattern" path/to/file.ts
-```
-
-**Violation:** What it looks like when wrong.
-````
-
-### Step 6: Create New Skills
-
-<!-- 新スキル作成 — ユーザー確認後にテンプレートから生成 -->
+<!-- 新verifyスキル作成 — ユーザー確認後にテンプレートから生成 -->
 
 **Important:** Always confirm the skill name with the user before creating.
 
-For each new skill to create:
+**Naming rules:**
+- Name must start with `verify-` (e.g., `verify-auth`, `verify-api`)
+- kebab-case only
 
-1. **Explore** — read related changed files to deeply understand the patterns
+**Required sections:** Purpose, When to Run, Related Files, Workflow (with PASS/FAIL criteria), Output Format, Exceptions
 
-2. **Confirm name with user** — use `AskUserQuestion`:
-
-   Present the patterns/domain the skill will cover and ask the user to provide or confirm a name.
-
-   **Naming rules:**
-   - Name must start with `verify-` (e.g., `verify-auth`, `verify-api`, `verify-caching`)
-   - If user provides a name without `verify-` prefix, prepend it automatically and inform them
-   - Use kebab-case (e.g., `verify-error-handling`, not `verify_error_handling`)
-
-3. **Create** — generate `.claude/skills/verify-<name>/SKILL.md` using this template:
-
-```yaml
----
-name: verify-<name>
-description: <one-line description>. Use after <trigger condition>.
----
-```
-
-Required sections:
-- **Purpose** — 2-5 numbered verification categories
-- **When to Run** — 3-5 trigger conditions
-- **Related Files** — table of actual file paths in the codebase (verified with `ls`, no placeholders)
-- **Workflow** — check steps, each specifying:
-  - Tool to use (Grep, Glob, Read, Bash)
-  - Exact file paths or patterns
-  - PASS/FAIL criteria
-  - Fix instructions on failure
-- **Output Format** — markdown table for results
-- **Exceptions** — at least 2-3 realistic "not a violation" cases
-
-4. **Update CLAUDE.md** — add a row to the Skills table in `CLAUDE.md` after creating the new skill.
-
-   **Note:** No manual registration needed in `manage-skills/SKILL.md` or `verify-implementation/SKILL.md`. Both meta-skills dynamically discover `.claude/skills/verify-*/` at runtime.
+After creating:
+1. Update **Registered Assets** in this file
+2. Update `CLAUDE.md` Skills table
+3. No manual registration needed in `verify-implementation/SKILL.md` — it discovers dynamically
 
 ### Step 7: Validation
 
@@ -267,58 +282,45 @@ Required sections:
 
 After all edits:
 
-1. Re-read all modified SKILL.md files
+1. Re-read all modified files
 2. Verify markdown format (unclosed code blocks, consistent table columns)
-3. Check for broken file references — for each path in Related Files:
+3. Check for broken file references:
 
 ```bash
 ls <file-path> 2>/dev/null || echo "MISSING: <file-path>"
 ```
 
-4. Dry-run one detection command from each updated skill to validate syntax
-5. Verify CLAUDE.md Skills table matches actual `.claude/skills/` directory contents
+4. Dry-run one detection command from each updated asset to validate syntax
+5. Verify **Registered Assets** tables match actual filesystem
+6. Verify CLAUDE.md Skills table is up to date
 
 ### Step 8: Summary Report
 
 <!-- 最終レポート — 変更・生成・未カバーの要約 -->
 
-Display the final report:
-
 ```markdown
 ## Session Skill Maintenance Report
 
 ### Changed files analyzed: N
-
-### Skills updated: X
-- `verify-<name>`: N new checks added, Related Files updated
-- `verify-<name>`: detection commands updated for new patterns
-
-### Skills created: Y
-- `verify-<name>`: covers <pattern>
-
-### Updated related files:
-- `CLAUDE.md`: Skills table updated
-
-### Unaffected skills: Z
-- (no related changes)
-
-### Uncovered changes (no skill applicable):
-- `path/to/file` — exempt (reason)
+### Assets affected: X (of Y total registered)
+### Assets updated: U
+### Verify skills created: C
+### Uncovered changes: E (exempt)
 ```
 
 ---
 
-## Quality Standards for Created/Updated Skills
+## Quality Standards
 
-<!-- スキル品質基準 — 全スキルが満たすべき要件 -->
+<!-- スキル品質基準 -->
 
-All created or updated skills must have:
+All created or updated assets must have:
 
-- **Actual file paths from the codebase** (verified with `ls`), not placeholders
-- **Working detection commands** — real grep/glob patterns matching current files
-- **PASS/FAIL criteria** — clear conditions for pass and fail on each check
-- **At least 2-3 realistic exceptions** — descriptions of what is NOT a violation
-- **Consistent format** — same as existing skills (frontmatter, section headers, table structure)
+- **Actual file paths** (verified with `ls`), not placeholders
+- **Working detection commands** matching current files
+- **PASS/FAIL criteria** for each check
+- **At least 2-3 realistic exceptions**
+- **Consistent format** with existing assets
 
 ---
 
@@ -326,22 +328,26 @@ All created or updated skills must have:
 
 | File | Purpose |
 |------|---------|
-| `.claude/skills/verify-implementation/SKILL.md` | Integrated verification runner (discovers verify skills dynamically) |
-| `.claude/skills/manage-skills/SKILL.md` | This file itself |
-| `CLAUDE.md` | Project guidelines (this skill manages the Skills section) |
-| `registry.md` | Asset registry for the Skill & Agent Factory |
+| `.claude/skills/verify-implementation/SKILL.md` | Integrated verification runner |
+| `CLAUDE.md` | Project guidelines and routing |
+| `registry.md` | Asset registry |
+| `plugins/devops/agents/devops-pipeline.md` | DevOps pipeline orchestration |
+| `scripts/lint-skills.py` | Skill structure linter |
+| `scripts/sync-registry.py` | Registry auto-sync |
+| `scripts/dep-graph.py` | Dependency graph and cycle detection |
+| `standards/CODING-STANDARDS.md` | 10 global coding rules |
 
 ## Exceptions
 
-<!-- 例外 — スキル対象外のファイル種別 -->
+<!-- 例外 — 管理対象外のファイル種別 -->
 
 The following are **NOT problems**:
 
-1. **Lock files and generated files** — `package-lock.json`, `yarn.lock`, `pnpm-lock.yaml`, `Cargo.lock`, auto-generated migration files, build outputs need no skill coverage
-2. **One-off config changes** — version bumps in `package.json`/`Cargo.toml`, minor linter/formatter config changes need no new skill
-3. **Documentation files** — `README.md`, `CHANGELOG.md`, `LICENSE` are not code patterns requiring verification
-4. **Test fixture files** — files in fixture directories (`fixtures/`, `__fixtures__/`, `test-data/`) are not production code
-5. **Unaffected skills** — skills marked UNAFFECTED need no review; most skills in most sessions fall here
-6. **CLAUDE.md itself** — changes to CLAUDE.md are documentation updates, not verifiable code patterns
-7. **Vendor/third-party code** — files in `vendor/`, `node_modules/`, or copied library directories follow external rules
-8. **CI/CD config** — `.github/`, `.gitlab-ci.yml`, `Dockerfile` are infrastructure, not application patterns needing verify skills
+1. **Lock files and generated files** — `package-lock.json`, `yarn.lock`, build outputs need no coverage
+2. **One-off config changes** — version bumps, minor linter config changes
+3. **Documentation files** — `README.md`, `CHANGELOG.md`, `LICENSE`
+4. **Test fixture files** — files in `fixtures/`, `test-data/`
+5. **Vendor/third-party code** — `vendor/`, `node_modules/`
+6. **CI/CD config** — `.github/`, `Dockerfile`
+7. **CLAUDE.md itself** — documentation updates, not verifiable code patterns
+8. **This file itself** — changes to manage-skills/SKILL.md are meta-maintenance

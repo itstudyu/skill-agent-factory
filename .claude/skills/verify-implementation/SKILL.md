@@ -1,22 +1,24 @@
 ---
 name: verify-implementation
-description: Sequentially runs all verify skills in the project to produce an integrated verification report. Use after feature implementation, before PR, during code review.
+description: Sequentially runs ALL verification checks across the project — verify skills, devops pipeline skills, figma skills, vertx skills, scripts, and coding standards. Produces an integrated report. Use after implementation, before PR, during review.
 disable-model-invocation: true
-argument-hint: "[optional: specific verify skill name]"
+argument-hint: "[optional: skill name, category (devops/figma/vertx), or 'all']"
 ---
 
-<!-- 統合検証実行 — 全verifyスキルを順次実行し統合レポートを生成 -->
+<!-- 統合検証実行 — 全プロジェクトアセットを順次検証し統合レポートを生成 -->
 
 # Implementation Verification
 
 ## Purpose
 
-Sequentially executes all `verify-*` skills registered in the project to perform integrated verification:
+Runs comprehensive verification across ALL project assets:
 
-- Run checks defined in each skill's Workflow
-- Reference each skill's Exceptions to prevent false positives
-- Suggest fixes for discovered issues
-- Apply fixes after user approval and re-verify
+- **verify-* skills** — custom verification rules created by `/manage-skills`
+- **DevOps pipeline skills** — safety, code review, architecture, Japanese comments, tests, version
+- **Figma skills** — design analysis, code sync, responsive validation
+- **Vert.x skills** — repo analysis, EventBus registration, API caller
+- **Scripts** — lint-skills.py, sync-registry.py, dep-graph.py
+- **Standards** — CODING-STANDARDS.md compliance
 
 ## When to Run
 
@@ -25,85 +27,133 @@ Sequentially executes all `verify-*` skills registered in the project to perform
 - During code review
 - When auditing codebase rule compliance
 
+## Verification Categories
+
+<!-- 検証カテゴリ — 実行順序と担当アセット -->
+
+| # | Category | Assets | What it checks |
+|---|----------|--------|---------------|
+| 1 | Skill Structure | `lint-skills.py` | Frontmatter, required fields, circular deps, stale refs |
+| 2 | Dependency Graph | `dep-graph.py` | Circular references, deep chains (>3) |
+| 3 | Registry Sync | `sync-registry.py` | registry.md and README.md up to date |
+| 4 | Security | `devops-safety-check` | Secrets, injection patterns, vulnerabilities |
+| 5 | Code Quality | `devops-code-review` | Logic, performance, N+1, dead code |
+| 6 | Architecture | `devops-arch-review` | Structure, naming, duplication, SRP |
+| 7 | Japanese Comments | `devops-japanese-comments` | All comments/logs in Japanese |
+| 8 | Coding Standards | `CODING-STANDARDS.md` | 10 global rules (headers, 30-line funcs, etc.) |
+| 9 | Version Compat | `devops-version-check` | Language/library version, deprecated APIs |
+| 10 | Tests | `devops-test-gen` | Test coverage for changed files |
+| 11 | Frontend | `devops-frontend-review` + figma skills | UI pixel-perfect, responsive, design tokens |
+| 12 | Vert.x | vertx skills | EventBus, API templates, repo structure |
+| 13 | Git | `devops-git-commit` | Branch strategy, commit format |
+| 14 | Custom | `.claude/skills/verify-*` | Any verify skills created by `/manage-skills` |
+
 ## Workflow
 
-### Step 1: Dynamic Skill Discovery
+### Step 1: Asset Discovery & Scope
 
-<!-- 動的スキル探索 — 手動リストではなくファイルシステムから直接検出 -->
+<!-- 動的アセット探索 — カテゴリ別に全アセットを検出 -->
 
-**Discover from the file system directly, not from a manual list:**
+**Discover all verifiable assets from the file system:**
 
 ```bash
-ls -d .claude/skills/verify-*/ 2>/dev/null
+# Custom verify skills
+ls -d .claude/skills/verify-*/SKILL.md 2>/dev/null
+
+# DevOps plugin skills
+ls -d plugins/devops/skills/*/SKILL.md 2>/dev/null
+
+# Figma plugin skills
+ls -d plugins/figma/skills/*/SKILL.md 2>/dev/null
+
+# Vert.x plugin skills
+ls -d plugins/vertx/skills/*/SKILL.md 2>/dev/null
+
+# Scripts
+ls scripts/*.py 2>/dev/null
+
+# Standards
+ls standards/*.md 2>/dev/null
 ```
 
-Verify that each discovered directory contains a `SKILL.md`. Skip directories without one.
+**Scope filtering:** If an optional argument is provided:
+- Skill name (e.g., `devops-safety-check`) → run only that skill
+- Category (e.g., `devops`, `figma`, `vertx`) → run only that category
+- `all` or no argument → run everything
 
-If an optional argument is provided, filter to skills matching that name only.
+**If 0 assets found:** Display guidance and terminate.
 
-**If 0 skills found:**
+**Display discovered scope:**
 
 ```markdown
 ## Implementation Verification
 
-No verification skills found. Run `/manage-skills` to create verification skills for your project.
-```
+Running verification across N assets in M categories:
 
-Terminate the workflow in this case.
-
-**If 1+ skills found:**
-
-Read the `name` and `description` from each skill's frontmatter and display:
-
-```markdown
-## Implementation Verification
-
-Running the following verification skills sequentially:
-
-| # | Skill | Description |
-|---|-------|-------------|
-| 1 | verify-<name1> | <description1> |
-| 2 | verify-<name2> | <description2> |
+| Category | Assets | Count |
+|----------|--------|-------|
+| Skill Structure | lint-skills.py | 1 |
+| Security | devops-safety-check | 1 |
+| Code Quality | devops-code-review | 1 |
+| Custom Verify | verify-api, verify-auth | 2 |
+| ... | ... | ... |
 
 Starting verification...
 ```
 
-### Step 2: Sequential Execution
+### Step 2: Sequential Execution by Category
 
-<!-- 順次実行 — 各スキルのWorkflow検査を実行 -->
+<!-- 順次実行 — カテゴリ順に全検査を実行 -->
 
-For each discovered verify skill, perform the following:
+Execute each category in the order defined in the **Verification Categories** table.
 
-#### 2a. Read skill SKILL.md
+#### 2a. Script-based checks (Categories 1-3)
 
-Read the skill's `.claude/skills/verify-<name>/SKILL.md` and parse these sections:
+Run scripts directly and capture output:
 
-- **Workflow** — check steps and detection commands to execute
-- **Exceptions** — patterns considered not a violation
-- **Related Files** — files to check
+```bash
+# Category 1: Skill Structure
+python3 scripts/lint-skills.py --strict 2>&1
 
-**If SKILL.md parsing fails:** Mark the skill as `SKIP` and record `PARSE_ERROR` in the report. Continue executing other skills.
+# Category 2: Dependency Graph
+python3 scripts/dep-graph.py --check 2>&1
 
-#### 2b. Run checks
+# Category 3: Registry Sync
+python3 scripts/sync-registry.py --dry-run 2>&1
+```
 
-Execute each check defined in the Workflow section in order:
+Parse script output for errors/warnings. Record as PASS (0 errors), WARN (warnings only), or FAIL (errors found).
 
-1. Use the tool specified in the check (Grep, Glob, Read, Bash) to detect patterns
-2. Compare results against the skill's PASS/FAIL criteria
-3. Exempt patterns matching the Exceptions section
-4. For FAIL results, record the issue:
-   - File path and line number
-   - Problem description
-   - Recommended fix (with code example)
+**If a script fails to execute:** Record as `ERROR` and continue to the next category.
 
-**If an individual check fails to execute (command error etc.):** Record that check as `ERROR` and continue to the next check. A single check failure does not abort the entire skill run.
+#### 2b. Skill-based checks (Categories 4-13)
 
-#### 2c. Record per-skill results
+For each skill in categories 4-13:
 
-Display progress after each skill completes:
+1. Read the skill's `SKILL.md` and parse: **Workflow**, **Exceptions**, **Related Files**
+2. Execute each check defined in the Workflow section
+3. Compare results against PASS/FAIL criteria
+4. Exempt patterns matching Exceptions
+5. Record issues with file path, line number, problem, fix suggestion
+
+**If SKILL.md parsing fails:** Mark as `SKIP` with `PARSE_ERROR`. Continue to next skill.
+**If individual check fails:** Mark as `ERROR`. Continue to next check.
+
+#### 2c. Custom verify skills (Category 14)
+
+For each `.claude/skills/verify-*/SKILL.md` discovered:
+
+1. Read and parse the skill's full Workflow
+2. Execute all checks as defined
+3. Apply the skill's own Exceptions
+4. Record results
+
+#### 2d. Per-category progress
+
+Display after each category completes:
 
 ```markdown
-### verify-<name> verification complete
+### [Category N] <name> — complete
 
 - Checks: N
 - Passed: X
@@ -111,124 +161,80 @@ Display progress after each skill completes:
 - Exempted: Z
 - Errors: E
 
-[Moving to next skill...]
+[Moving to next category...]
 ```
 
 ### Step 3: Integrated Report
 
-<!-- 統合レポート — 全スキル結果を1つのレポートに集約 -->
-
-After all skills complete, consolidate results into a single report:
+<!-- 統合レポート — 全カテゴリ結果を1つのレポートに集約 -->
 
 ```markdown
 ## Implementation Verification Report
 
 ### Summary
 
-| Verify Skill | Status | Issues | Errors | Details |
-|-------------|--------|--------|--------|---------|
-| verify-<name1> | PASS / X issues | N | E | details... |
-| verify-<name2> | PASS / X issues | N | E | details... |
+| # | Category | Asset | Status | Issues | Errors |
+|---|----------|-------|--------|--------|--------|
+| 1 | Skill Structure | lint-skills.py | PASS | 0 | 0 |
+| 2 | Dependency Graph | dep-graph.py | PASS | 0 | 0 |
+| 3 | Registry Sync | sync-registry.py | WARN | 1 | 0 |
+| 4 | Security | devops-safety-check | FAIL | 3 | 0 |
+| ... | ... | ... | ... | ... | ... |
 
-**Total issues found: X / Errors: E**
+**Total: X issues / E errors across N categories**
 ```
 
-**If all checks pass:**
+**All checks pass:**
 
 ```markdown
-All verifications passed!
-
-Implementation complies with all project rules:
-
-- verify-<name1>: <pass summary>
-- verify-<name2>: <pass summary>
-
+All verifications passed across N categories!
 Ready for code review.
 ```
 
-**If issues found:**
-
-List each issue with file path, problem description, and recommended fix:
+**Issues found:**
 
 ```markdown
 ### Issues Found
 
-| # | Skill | File | Problem | Fix |
-|---|-------|------|---------|-----|
-| 1 | verify-<name1> | `path/to/file.ts:42` | Problem description | Fix code example |
-| 2 | verify-<name2> | `path/to/file.tsx:15` | Problem description | Fix code example |
+| # | Category | File | Problem | Fix |
+|---|----------|------|---------|-----|
+| 1 | Security | `src/api.ts:42` | Hardcoded API key | Move to .env |
+| 2 | Code Quality | `src/handler.ts:15` | Missing await | Add await |
+| 3 | Japanese Comments | `src/utils.ts:1` | English header | Convert to Japanese |
 ```
 
 ### Step 4: User Action Confirmation
 
 <!-- ユーザー確認 — 修正オプション提示 -->
 
-If issues were found, use `AskUserQuestion` to confirm with the user:
-
-```markdown
----
-
-### Fix Options
-
-**X issues found. How would you like to proceed?**
+If issues found, use `AskUserQuestion`:
 
 1. **Fix all** — automatically apply all recommended fixes
-2. **Fix individually** — review and apply each fix one by one
-3. **Skip** — exit without changes
-```
+2. **Fix by category** — choose which categories to fix
+3. **Fix individually** — review each fix one by one
+4. **Skip** — exit without changes
 
 ### Step 5: Apply Fixes
 
-<!-- 修正適用 — ユーザー選択に応じて修正実行 -->
+<!-- 修正適用 -->
 
-Apply fixes based on user selection.
-
-**"Fix all" selected:**
-
-Apply all fixes in order, displaying progress:
-
-```markdown
-## Applying fixes...
-
-- [1/X] verify-<name1>: `path/to/file.ts` fixed
-- [2/X] verify-<name2>: `path/to/file.tsx` fixed
-
-X fixes applied.
-```
-
-**"Fix individually" selected:**
-
-For each issue, show the fix content and use `AskUserQuestion` to confirm approval.
+Apply fixes based on user selection, displaying progress per category.
 
 ### Step 6: Re-verify After Fixes
 
 <!-- 修正後再検証 — Before/After比較 -->
 
-If fixes were applied, re-run only the skills that had issues and compare Before/After:
+Re-run only affected categories and compare Before/After:
 
 ```markdown
 ## Post-fix Re-verification
 
-Re-running skills that had issues...
-
-| Verify Skill | Before | After |
-|-------------|--------|-------|
-| verify-<name1> | X issues | PASS |
-| verify-<name2> | Y issues | PASS |
+| Category | Before | After |
+|----------|--------|-------|
+| Security | 3 issues | PASS |
+| Japanese Comments | 1 issue | PASS |
 
 All verifications passed!
-```
-
-**If issues remain:**
-
-```markdown
-### Remaining Issues
-
-| # | Skill | File | Problem |
-|---|-------|------|---------|
-| 1 | verify-<name> | `path/to/file.ts:42` | Cannot auto-fix — manual review needed |
-
-Resolve manually, then run `/verify-implementation` again.
 ```
 
 ---
@@ -239,16 +245,23 @@ Resolve manually, then run `/verify-implementation` again.
 
 The following are **NOT problems**:
 
-1. **Projects with no registered skills** — display a guidance message and exit, not an error
-2. **Skill-specific exceptions** — patterns defined in each verify skill's Exceptions section are not reported as issues
-3. **verify-implementation itself** — does not include itself in the execution target list
-4. **manage-skills** — does not start with `verify-` so is not included in execution targets
-5. **SKILL.md parse errors** — one skill failing to parse does not abort other skill executions
+1. **Projects with no verify skills** — Categories 1-13 still run; only Category 14 is empty
+2. **Skill-specific exceptions** — each skill's Exceptions section is respected
+3. **verify-implementation itself** — not included in execution targets
+4. **manage-skills** — not included in execution targets
+5. **Script execution errors** — one script failing does not abort others
+6. **SKILL.md parse errors** — one skill failing to parse does not abort others
+7. **Skipped categories** — when user specifies a scope filter, unlisted categories are expected to be absent
 
 ## Related Files
 
 | File | Purpose |
 |------|---------|
-| `.claude/skills/manage-skills/SKILL.md` | Skill maintenance (creates/updates verify skills) |
-| `CLAUDE.md` | Project guidelines |
-| `registry.md` | Asset registry for the Skill & Agent Factory |
+| `.claude/skills/manage-skills/SKILL.md` | Skill maintenance (creates/updates verify skills, tracks all assets) |
+| `CLAUDE.md` | Project guidelines and routing |
+| `registry.md` | Asset registry |
+| `plugins/devops/agents/devops-pipeline.md` | DevOps pipeline orchestration |
+| `scripts/lint-skills.py` | Skill structure linter |
+| `scripts/sync-registry.py` | Registry auto-sync |
+| `scripts/dep-graph.py` | Dependency graph and cycle detection |
+| `standards/CODING-STANDARDS.md` | 10 global coding rules |
